@@ -1,0 +1,3 @@
+#!/bin/sh
+# Refuse a push when a test fails.
+exec uv run --project "$(dirname "$0")/.." pytest

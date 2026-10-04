@@ -60,7 +60,7 @@ flowchart LR
 - [ ] **Owner F: Install Docker Desktop.**
   Download it from docker.com and start it once. Task 0.2 uses it to run MinIO and the Iceberg catalog. This machine has no way to run containers yet.
 
-- [ ] **0.1 Project skeleton.** Package layout, linter, one test, hooks that run the linter before each commit and the tests before each push, and CI that runs both and reports the pull request size. Kept tiny on purpose: it is the trial run of the review loop.
+- [x] **0.1 Project skeleton.** Package layout, linter, one test, hooks that run the linter before each commit and the tests before each push, and CI that runs both and reports the pull request size. Kept tiny on purpose: it is the trial run of the review loop.
   Needs: nothing. Done when: the tests pass locally with one command, a commit with a lint error is refused, and CI is green on the pull request.
 
 - [ ] **0.2 Lakehouse check.** MinIO and an Iceberg catalog start with one command. DuckDB creates an Iceberg table, inserts rows, and reads an earlier snapshot.
