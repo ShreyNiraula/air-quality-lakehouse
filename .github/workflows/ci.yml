@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # the size report compares the branch with main
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0  # this action publishes no moving major tag
       - run: uv sync --locked
       - run: make lint
       - run: make test
