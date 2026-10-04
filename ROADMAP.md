@@ -26,6 +26,7 @@ Prove the tools and the data behave as the plan assumes, before any pipeline cod
 flowchart LR
   oA(["Owner A: OpenAQ API key"])
   oB(["Owner B: choose two cities"])
+  oF(["Owner F: install Docker Desktop"])
   t0_1["0.1 Project skeleton"]
   t0_2["0.2 Lakehouse check"]
   t0_3["0.3 dbt check"]
@@ -35,6 +36,7 @@ flowchart LR
   t0_7["0.7 City candidates"]
   t0_8["0.8 Source manifests"]
   t0_1 --> t0_2
+  oF --> t0_2
   t0_1 --> t0_4
   t0_1 --> t0_5
   t0_1 --> t0_6
@@ -55,11 +57,14 @@ flowchart LR
 - [ ] **Owner B: Choose two cities.**
   Needs: 0.7. Pick from the table that task 0.7 produces.
 
+- [ ] **Owner F: Install Docker Desktop.**
+  Download it from docker.com and start it once. Task 0.2 uses it to run MinIO and the Iceberg catalog. This machine has no way to run containers yet.
+
 - [ ] **0.1 Project skeleton.** Package layout, linter, one test, hooks that run the linter before each commit and the tests before each push, and CI that runs both and reports the pull request size. Kept tiny on purpose: it is the trial run of the review loop.
   Needs: nothing. Done when: the tests pass locally with one command, a commit with a lint error is refused, and CI is green on the pull request.
 
 - [ ] **0.2 Lakehouse check.** MinIO and an Iceberg catalog start with one command. DuckDB creates an Iceberg table, inserts rows, and reads an earlier snapshot.
-  Needs: 0.1. Done when: one command prints pass, or the fallback (write with PyIceberg, read with DuckDB) is shown working.
+  Needs: 0.1, Owner F. Done when: one command prints pass, or the fallback (write with PyIceberg, read with DuckDB) is shown working.
 
 - [ ] **0.3 dbt check.** dbt builds one model into that Iceberg catalog. The dbt and DuckDB versions are pinned as tested.
   Needs: 0.2. Done when: one command builds the model, or the fallback is recorded with the reason.
@@ -67,7 +72,7 @@ flowchart LR
 - [ ] **0.4 OpenAQ file check.** Download one real day file without credentials and compare it with what the plan expects: header, exact unit text, hour convention, and how many days late files arrive.
   Needs: 0.1. Done when: a script prints each finding next to the expected value.
 
-- [ ] **0.5 Sensor.Community check.** The licence read from a primary source. The columns of a dust file and of a temperature and humidity file, how the two join, and how far apart readings are. The proposed valid ranges compared with real values.
+- [ ] **0.5 Sensor.Community check.** The licence read from a primary source. The columns of a dust file and of a temperature and humidity file, how the two join, how far apart readings are, and how many days late files arrive. The proposed valid ranges compared with real values.
   Needs: 0.1. Done when: the findings are recorded with their sources. If the licence is missing or unclear, the decision comes to the owner.
 
 - [ ] **0.6 Vocabulary check.** The standard names, the unit spellings and the WHO 15 µg/m³ value confirmed at their sources.
