@@ -75,7 +75,7 @@ flowchart LR
 - [ ] **0.5 Sensor.Community check.** The licence read from a primary source. The columns of a dust file and of a temperature and humidity file, how the two join, how far apart readings are, and how many days late files arrive. The proposed valid ranges compared with real values.
   Needs: 0.1. Done when: the findings are recorded with their sources. If the licence is missing or unclear, the decision comes to the owner.
 
-- [ ] **0.6 Vocabulary check.** The standard names, the unit spellings and the WHO 15 µg/m³ value confirmed at their sources.
+- [x] **0.6 Vocabulary check.** The standard names, the unit spellings and the WHO 15 µg/m³ value confirmed at their sources.
   Needs: 0.1. Done when: a short record with links is committed, and the vocabulary table in `plan.md` is corrected if anything differs.
 
 - [ ] **0.7 City candidates.** A script lists cities where a reference monitor has low-cost sensors within about 1 km, with data from both since January 2025. It also reports whether each monitor measures temperature or humidity.
