@@ -4,7 +4,13 @@ import gzip
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from airquality.checks.openaq_file import check, hour_labels, lag_hours, parse_listing
+from airquality.checks.openaq_file import (
+    check,
+    hour_labels,
+    in_station_time,
+    lag_hours,
+    parse_listing,
+)
 
 DAY = date(2026, 1, 10)
 BERLIN = ZoneInfo("Europe/Berlin")  # UTC+1 in January
@@ -82,6 +88,14 @@ def test_timestamps_in_another_zone_than_the_station_differ():
     name = "UTC offset of the timestamps, against Europe/Berlin at those times"
     assert findings(day_file())[name].matches is True
     assert findings(day_file(offset="+00:00"))[name].matches is False
+
+
+def test_offsets_are_compared_timestamp_by_timestamp():
+    # 29 March 2026 in Berlin: 01:30 is still UTC+1 and 03:30 is already UTC+2.
+    right = ["2026-03-29T01:30+01:00", "2026-03-29T03:30+02:00"]
+    swapped = ["2026-03-29T01:30+02:00", "2026-03-29T03:30+01:00"]
+    assert in_station_time([datetime.fromisoformat(stamp) for stamp in right], BERLIN)
+    assert not in_station_time([datetime.fromisoformat(stamp) for stamp in swapped], BERLIN)
 
 
 def test_lag_is_counted_from_the_end_of_the_local_day():

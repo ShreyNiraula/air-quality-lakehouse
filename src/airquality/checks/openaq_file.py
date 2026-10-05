@@ -77,6 +77,11 @@ def lag_hours(files: dict[date, datetime], zone: ZoneInfo) -> list[float]:
     return [(files[day] - day_ends[day]).total_seconds() / 3600 for day in files]
 
 
+def in_station_time(stamps: list[datetime], zone: ZoneInfo) -> bool:
+    """Whether each timestamp carries the offset the station's timezone has at that instant."""
+    return all(stamp.utcoffset() == stamp.astimezone(zone).utcoffset() for stamp in stamps)
+
+
 def offsets(stamps: list[datetime]) -> str:
     return ", ".join(sorted({stamp.isoformat()[-6:] for stamp in stamps}))
 
@@ -144,7 +149,7 @@ def check(
             f"UTC offset of the timestamps, against {zone.key} at those times",
             offsets(in_zone),
             offsets(stamps),
-            offsets(stamps) == offsets(in_zone),
+            in_station_time(stamps, zone),
         ),
         Finding(
             "Timestamps name each hour by its",
