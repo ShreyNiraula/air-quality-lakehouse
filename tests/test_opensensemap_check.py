@@ -26,9 +26,9 @@ def listing(days=("2025-01-01", "2025-01-02", "2025-01-03")):
     return "\n".join(ROW.format(day=d, modified=modified) for d, modified in rows)
 
 
-def box(sensors=SENSORS, stamp="2025-01-03T00:02:27.710Z", temperature="13.70"):
+def box(sensors=SENSORS, stamp="2025-01-03T00:02:27.710Z", temperature="13.70", pm_stamp=None):
     files = {
-        "b" * 24: f"createdAt,value\n{stamp},3.30\n2025-01-03T00:05:00.000Z,4.00\n",
+        "b" * 24: f"createdAt,value\n{pm_stamp or stamp},3.30\n2025-01-03T00:05:00.000Z,4.00\n",
         "c" * 24: f"createdAt,value\n{stamp},{temperature}\n2025-01-03T00:05:00.000Z,nan\n",
         "d" * 24: f"createdAt,value\n{stamp},99.90\n",
     }
@@ -41,12 +41,13 @@ def findings(pages=None, own=None, sample=None, site=SITE, summary=SUMMARY):
 
 
 def test_inputs_shaped_like_the_real_ones_match_every_expectation():
-    result = findings(sample=[box(sensors=[SOIL, *SENSORS])])
+    result = findings(sample=[box(sensors=[SOIL, {"title": "Air T", "unit": "°C"}, *SENSORS])])
     assert [name for name, finding in result.items() if finding.matches is False] == []
     assert "PM2.5 [µg/m³] SDS 011 -> pm25" in result["Sensors of the box"].found
     assert result["Sampled boxes with PM2.5, temperature and humidity"].found == "1"
     assert result["Names of temperature sensors in the sample"].found == "Temperatur [°C] x1"
-    assert result["Sampled sensors left out as not in the air"].found == "Bodentemperatur [°C]"
+    unplaced = result["Sampled sensors in these units that the rule skips"].found
+    assert unplaced == "Air T [°C]; Bodentemperatur [°C]; PM10 [µg/m³]"
 
 
 def test_the_listing_gives_each_day_folder_and_the_lag_after_the_utc_day():
@@ -62,10 +63,12 @@ def test_days_without_a_folder_are_named_even_when_they_are_the_newest():
     assert result.found.endswith("1 days from 2025-01-01 to 2025-01-03 have none: 2025-01-03")
 
 
+STAMPS = "Timestamps in the three sensor files of the box"
 BROKEN = [
     ({"own": box(sensors=SENSORS[:3])}, "Sensors of the box"),
-    ({"own": box(stamp="2025-01-02T23:59:00.000Z")}, "Timestamps in the PM2.5 file"),
-    ({"own": box(stamp="2025-01-03T00:02:27")}, "Timestamps in the PM2.5 file"),  # no Z
+    ({"own": box(stamp="2025-01-02T23:59:00.000Z")}, STAMPS),
+    ({"own": box(stamp="2025-01-03T00:02:27")}, STAMPS),  # no Z
+    ({"own": box(stamp="2025-01-02T23:59:00.000Z", pm_stamp="2025-01-03T00:01:00.000Z")}, STAMPS),
     ({"site": {"ARCHIVE": "Archive"}}, "Licence named in the site's own text"),
     ({"summary": "<p>Terms apply.</p>"}, "Conditions of that licence"),
     (
@@ -81,11 +84,11 @@ def test_one_broken_input_makes_only_its_own_finding_differ(inputs, name):
     assert [found for found, finding in result.items() if finding.matches is False] == [name]
 
 
-def test_a_reading_outside_the_proposed_range_is_counted():
-    result = findings(sample=[box(), box(temperature="-146.10")])
+def test_a_reading_outside_the_range_is_counted_and_a_box_with_no_reading_is_reported():
+    result = findings(sample=[box(), box(temperature="-146.10"), box(temperature="nan")])
     found = result["temperature against the proposed -60 to 60"]
     assert found.matches is False
-    assert found.found.startswith("1 of 2 readings outside, in 1 of 2 boxes")
+    assert "1 of 2 readings outside, in 1 of 2 boxes read; 1 more boxes had no" in found.found
 
 
 CASES = [

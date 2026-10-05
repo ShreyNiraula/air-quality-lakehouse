@@ -28,10 +28,11 @@ SAMPLE = 20  # boxes read for the names, the units and the value ranges
 BOX_FOLDER = re.compile(r'href="\./([0-9a-f]{24}-[^"/]*/)"')  # a box's folder in a day's listing
 RANGES = {"temperature": (-60, 60), "relative_humidity": (0, 100)}  # proposed in plan.md
 # How this check tells a parameter from a sensor's name and unit. The names are typed by owners.
+# The units are written as they read after NFKC: a Greek mu and a plain 3.
 RULES = {
-    "pm25": (r"pm\s?2[.,]5", ("µg/m³",)),
-    "temperature": (r"temp", ("°C",)),
-    "relative_humidity": (r"feucht|humid", ("%", "%rF")),
+    "pm25": (r"pm\s?2[.,]5", {"μg/m3"}),
+    "temperature": (r"temp", {"°C"}),
+    "relative_humidity": (r"feucht|humid", {"%", "%rF"}),
 }
 NOT_AIR = r"boden|soil|beet|wasser|water"  # names of sensors in the ground or in water
 
@@ -57,13 +58,16 @@ def folders(listing: str) -> dict[date, datetime]:
     return {date.fromisoformat(day): datetime.fromisoformat(when) for day, when in found}
 
 
+def unit_of(sensor: dict) -> str:
+    return unicodedata.normalize("NFKC", (sensor.get("unit") or "").strip())  # as the unit rule
+
+
 def parameter(sensor: dict) -> str | None:
-    """The parameter a sensor measures, by `RULES`, or None. Units are compared after NFKC."""
+    """The parameter a sensor measures, by `RULES`, or None."""
     title = sensor.get("title") or ""
-    unit = unicodedata.normalize("NFKC", (sensor.get("unit") or "").strip())
     for name, (pattern, units) in RULES.items():
         named = re.search(pattern, title, re.I) and not re.search(NOT_AIR, title, re.I)
-        if named and unit in [unicodedata.normalize("NFKC", u) for u in units]:
+        if named and unit_of(sensor) in units:
             return name
     return None
 
@@ -107,12 +111,11 @@ def check(
     due = (now - timedelta(days=2)).date()  # a day's folder is expected once two days have passed
     wanted = [START + timedelta(days=n) for n in range((due - START).days + 1)]
     missing = [str(d) for d in wanted if d not in modified]
-    recent = sorted(modified)[-30:]
     lags = [(modified[d] - datetime.fromisoformat(f"{d}T00:00+00:00")).total_seconds() / 3600 - 24
-            for d in recent]  # fmt: skip
+            for d in sorted(modified)[-30:]]  # fmt: skip
     own = sensors(box)
     files = {name: box.files.get(sensor["_id"], "") for name, sensor in own.items()}
-    stamps = [stamp for stamp, _ in readings(files.get("pm25", ""))]
+    stamps = [stamp for text in files.values() for stamp, _ in readings(text)]
     heads = {text.split("\n", 1)[0].strip() for text in box.files.values()}
     licences = sorted({text for text in site.values() if "opendatacommons.org" in str(text)})
     conditions = re.search(r"[^.<>]*imposes no restrictions[^.<>]*\.", summary)
@@ -143,11 +146,12 @@ def check(
             heads == {"createdAt,value"},
         ),
         Finding(
-            "Timestamps in the PM2.5 file",
-            f"first {min(stamps)}, last {max(stamps)}" if stamps else "no PM2.5 reading",
+            "Timestamps in the three sensor files of the box",
+            f"first {min(stamps)}, last {max(stamps)}" if stamps else "no reading",
             box.url,
-            f"all on {day}, in UTC (ending in Z)",
-            bool(stamps) and all(s.startswith(str(day)) and s.endswith("Z") for s in stamps),
+            f"readings in each file, all on {day} and in UTC (ending in Z)",
+            all(readings(text) for text in files.values())
+            and all(s.startswith(str(day)) and s.endswith("Z") for s in stamps),
         ),
         Finding(
             "Time between readings, per sensor file of the box",
@@ -178,14 +182,14 @@ def check(
     placed = [sensors(b) for b in sample]
     complete = sum(1 for own in placed if set(own) == set(RULES))
     exposure = Counter(str(b.meta.get("exposure")) for b in sample)
+    units = set().union(*(units for _, units in RULES.values()))
     every = [s for b in sample for s in b.meta.get("sensors", [])]
-    left = {
-        f"{s['title']} [{s.get('unit')}]" for s in every if re.search(NOT_AIR, s["title"], re.I)
-    }
+    skipped = sorted({f"{s.get('title')} [{s.get('unit')}]" for s in every
+                      if unit_of(s) in units and not parameter(s)})  # fmt: skip
     findings += [
         Finding("Where the sampled boxes stand", str(dict(exposure.most_common())), source),
         Finding("Sampled boxes with PM2.5, temperature and humidity", str(complete), source),
-        Finding("Sampled sensors left out as not in the air", "; ".join(sorted(left)), source),
+        Finding("Sampled sensors in these units that the rule skips", "; ".join(skipped), source),
     ]
     for name in RULES:
         named = Counter(f"{own[name]['title']} [{own[name]['unit']}]" for own in placed
@@ -195,14 +199,13 @@ def check(
     for name, (low, high) in RANGES.items():
         per_box = [[value for _, value in readings(b.files.get(own[name]["_id"], ""))]
                    for b, own in zip(sample, placed, strict=True) if name in own]  # fmt: skip
-        values = [value for box_values in per_box for value in box_values]
+        read = [box_values for box_values in per_box if box_values]
+        values = [value for box_values in read for value in box_values]
         out = sum(1 for value in values if not low <= value <= high)
-        bad = sum(1 for box_values in per_box if any(not low <= v <= high for v in box_values))
-        found = f"{out} of {len(values)} readings outside, in {bad} of {len(per_box)} boxes"
-        title, found = (
-            f"{name} against the proposed {low} to {high}",
-            f"{found}; {spread(values, '')}",
-        )
+        bad = sum(1 for box_values in read if any(not low <= v <= high for v in box_values))
+        found = f"{out} of {len(values)} readings outside, in {bad} of {len(read)} boxes read"
+        found += f"; {len(per_box) - len(read)} more boxes had no reading; {spread(values, '')}"
+        title = f"{name} against the proposed {low} to {high}"
         matches = bool(values) and out == 0  # nothing read proves nothing
         findings.append(Finding(title, found, source, "readings, and none outside", matches))
     return findings
