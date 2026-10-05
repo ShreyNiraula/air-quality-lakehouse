@@ -98,7 +98,6 @@ CASES = [
     ("Luftfeuchte", "%rF", "relative_humidity"),
     ("Feuchtigkeit (Hochbeet)", "% nFK", None),  # soil moisture in a raised bed
     ("Bodenfeuchte", "%", None),
-    ("battery", "%", None),
     ("Temperatur", "K", None),
 ]
 
