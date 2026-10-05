@@ -29,10 +29,11 @@ BOX_FOLDER = re.compile(r'href="\./([0-9a-f]{24}-[^"/]*/)"')  # a box's folder i
 RANGES = {"temperature": (-60, 60), "relative_humidity": (0, 100)}  # proposed in plan.md
 # How this check tells a parameter from a sensor's name and unit. The names are typed by owners.
 RULES = {
-    "pm25": (r"pm\s?2[.,]5", "µg/m³"),
-    "temperature": (r"temp", "°C"),
-    "relative_humidity": (r"feucht|humid", "%"),
+    "pm25": (r"pm\s?2[.,]5", ("µg/m³",)),
+    "temperature": (r"temp", ("°C",)),
+    "relative_humidity": (r"feucht|humid", ("%", "%rF")),
 }
+NOT_AIR = r"boden|soil|beet|wasser|water"  # names of sensors in the ground or in water
 
 
 class Box(NamedTuple):
@@ -58,12 +59,11 @@ def folders(listing: str) -> dict[date, datetime]:
 
 def parameter(sensor: dict) -> str | None:
     """The parameter a sensor measures, by `RULES`, or None. Units are compared after NFKC."""
-    title, unit = sensor.get("title") or "", (sensor.get("unit") or "").strip()
-    for name, (pattern, wanted) in RULES.items():
-        same_unit = unicodedata.normalize("NFKC", unit).startswith(
-            unicodedata.normalize("NFKC", wanted)
-        )
-        if re.search(pattern, title, re.I) and same_unit:
+    title = sensor.get("title") or ""
+    unit = unicodedata.normalize("NFKC", (sensor.get("unit") or "").strip())
+    for name, (pattern, units) in RULES.items():
+        named = re.search(pattern, title, re.I) and not re.search(NOT_AIR, title, re.I)
+        if named and unit in [unicodedata.normalize("NFKC", u) for u in units]:
             return name
     return None
 
@@ -100,11 +100,12 @@ def spacing(text: str) -> str:
 
 
 def check(
-    day: date, listing: str, boxes: int, box: Box, sample: list[Box], site: dict, summary: str
+    day: date, now: datetime, listing: str, box: Box, sample: list[Box], site: dict, summary: str
 ) -> list[Finding]:
     """Every finding. `site` is the site's text by key, `summary` the licence summary page."""
     modified = folders(listing)
-    wanted = [START + timedelta(days=n) for n in range((max(modified) - START).days + 1)]
+    due = (now - timedelta(days=2)).date()  # a day's folder is expected once two days have passed
+    wanted = [START + timedelta(days=n) for n in range((due - START).days + 1)]
     missing = [str(d) for d in wanted if d not in modified]
     recent = sorted(modified)[-30:]
     lags = [(modified[d] - datetime.fromisoformat(f"{d}T00:00+00:00")).total_seconds() / 3600 - 24
@@ -118,13 +119,12 @@ def check(
     findings = [
         Finding(
             "Day folders in the archive",
-            f"{min(modified)} to {max(modified)}; {len(missing)} days since {START} have none"
-            + (": " + ", ".join(missing) if missing else ""),
+            f"{min(modified)} to {max(modified)}; {len(missing)} days from {START} to {due} have "
+            + ("none: " + ", ".join(missing) if missing else "none"),
             ARCHIVE,
-            f"a folder for every day since {START}, all at the top level",
+            f"a folder for every day from {START} to two days before the run, at the top level",
             not missing,
         ),
-        Finding(f"Boxes with a folder on {day}", str(boxes), f"{ARCHIVE}/{day}/"),
         Finding(
             "Sensors of the box",
             "; ".join(
@@ -178,9 +178,14 @@ def check(
     placed = [sensors(b) for b in sample]
     complete = sum(1 for own in placed if set(own) == set(RULES))
     exposure = Counter(str(b.meta.get("exposure")) for b in sample)
+    every = [s for b in sample for s in b.meta.get("sensors", [])]
+    left = {
+        f"{s['title']} [{s.get('unit')}]" for s in every if re.search(NOT_AIR, s["title"], re.I)
+    }
     findings += [
         Finding("Where the sampled boxes stand", str(dict(exposure.most_common())), source),
         Finding("Sampled boxes with PM2.5, temperature and humidity", str(complete), source),
+        Finding("Sampled sensors left out as not in the air", "; ".join(sorted(left)), source),
     ]
     for name in RULES:
         named = Counter(f"{own[name]['title']} [{own[name]['unit']}]" for own in placed
@@ -198,7 +203,8 @@ def check(
             f"{name} against the proposed {low} to {high}",
             f"{found}; {spread(values, '')}",
         )
-        findings.append(Finding(title, found, source, "no reading outside", out == 0))
+        matches = bool(values) and out == 0  # nothing read proves nothing
+        findings.append(Finding(title, found, source, "readings, and none outside", matches))
     return findings
 
 
@@ -233,7 +239,7 @@ def main() -> int:
     box = read_box(f"{ARCHIVE}/{day}/{own}")
     sample = [read_box(f"{ARCHIVE}/{day}/{name}") for name in spread_out]
     site, summary = json.loads(fetch(SITE_TEXT)), fetch(SUMMARY)
-    findings = check(day, listing, len(names), box, sample, site, summary)
+    findings = check(day, datetime.now(UTC), listing, box, sample, site, summary)
     command = " ".join(["python -m airquality.checks.opensensemap", *sys.argv[1:]])
     print("openSenseMap check (task 0.5b)")
     print(f"Run at {datetime.now(UTC):%Y-%m-%d %H:%M} UTC with: {command}")

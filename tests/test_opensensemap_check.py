@@ -1,20 +1,17 @@
 """The openSenseMap check, on made-up pages and files shaped like the real ones. No network."""
 
-from datetime import date
+from datetime import UTC, date, datetime
 
 import pytest
 
 from airquality.checks.opensensemap import BOX_FOLDER, Box, check, folders, parameter
 
-DAY = date(2025, 1, 3)
+DAY, NOW = date(2025, 1, 3), datetime(2025, 1, 5, 12, tzinfo=UTC)
+SOIL = {"_id": "e" * 24, "title": "Bodentemperatur", "unit": "°C"}
 BOX = "a" * 24 + "-My_Box/"
 ROW = """<a href="./{day}/"><span class="name">{day}/</span></a></td>
 <td class="hideable"><time datetime="{modified}">x</time></td>"""
-SITE = {
-    "DOWNLOAD_LICENSE": 'All data is licensed under <a href="http://opendatacommons.org/licenses/'
-    'pddl/summary/">Public Domain Dedication and License 1.0</a> and free to use.',
-    "ARCHIVE": "Archive",
-}
+SITE = {"L": 'Data: <a href="http://opendatacommons.org/licenses/pddl/summary/">PDDL 1.0</a>'}
 SUMMARY = "<p><em>Blank</em>: The PDDL imposes no restrictions on your use of the database.</p>"
 SENSORS = [
     {"_id": "a" * 24, "title": "PM10", "unit": "µg/m³", "sensorType": "SDS 011"},
@@ -29,9 +26,9 @@ def listing(days=("2025-01-01", "2025-01-02", "2025-01-03")):
     return "\n".join(ROW.format(day=d, modified=modified) for d, modified in rows)
 
 
-def box(sensors=SENSORS, pm="3.30", stamp="2025-01-03T00:02:27.710Z", temperature="13.70"):
+def box(sensors=SENSORS, stamp="2025-01-03T00:02:27.710Z", temperature="13.70"):
     files = {
-        "b" * 24: f"createdAt,value\n{stamp},{pm}\n2025-01-03T00:05:00.000Z,4.00\n",
+        "b" * 24: f"createdAt,value\n{stamp},3.30\n2025-01-03T00:05:00.000Z,4.00\n",
         "c" * 24: f"createdAt,value\n{stamp},{temperature}\n2025-01-03T00:05:00.000Z,nan\n",
         "d" * 24: f"createdAt,value\n{stamp},99.90\n",
     }
@@ -39,20 +36,17 @@ def box(sensors=SENSORS, pm="3.30", stamp="2025-01-03T00:02:27.710Z", temperatur
 
 
 def findings(pages=None, own=None, sample=None, site=SITE, summary=SUMMARY):
-    result = check(DAY, pages or listing(), 2, own or box(), sample or [box()], site, summary)
+    result = check(DAY, NOW, pages or listing(), own or box(), sample or [box()], site, summary)
     return {finding.name: finding for finding in result}
 
 
-def differing(**inputs):
-    return [name for name, finding in findings(**inputs).items() if finding.matches is False]
-
-
 def test_inputs_shaped_like_the_real_ones_match_every_expectation():
-    result = findings()
-    assert differing() == []
+    result = findings(sample=[box(sensors=[SOIL, *SENSORS])])
+    assert [name for name, finding in result.items() if finding.matches is False] == []
     assert "PM2.5 [µg/m³] SDS 011 -> pm25" in result["Sensors of the box"].found
     assert result["Sampled boxes with PM2.5, temperature and humidity"].found == "1"
     assert result["Names of temperature sensors in the sample"].found == "Temperatur [°C] x1"
+    assert result["Sampled sensors left out as not in the air"].found == "Bodentemperatur [°C]"
 
 
 def test_the_listing_gives_each_day_folder_and_the_lag_after_the_utc_day():
@@ -62,31 +56,36 @@ def test_the_listing_gives_each_day_folder_and_the_lag_after_the_utc_day():
     assert lag.found == "median 8.2, least 8.2, most 8.2 hours, over the newest 3 days"
 
 
-def test_a_day_without_a_folder_is_named():
-    result = findings(pages=listing(("2025-01-01", "2025-01-03")))["Day folders in the archive"]
+def test_days_without_a_folder_are_named_even_when_they_are_the_newest():
+    result = findings(pages=listing(("2025-01-01", "2025-01-02")))["Day folders in the archive"]
     assert result.matches is False
-    assert result.found.endswith("1 days since 2025-01-01 have none: 2025-01-02")
+    assert result.found.endswith("1 days from 2025-01-01 to 2025-01-03 have none: 2025-01-03")
 
 
-def test_a_box_without_a_humidity_sensor_differs():
-    assert differing(own=box(sensors=SENSORS[:3])) == ["Sensors of the box"]
+BROKEN = [
+    ({"own": box(sensors=SENSORS[:3])}, "Sensors of the box"),
+    ({"own": box(stamp="2025-01-02T23:59:00.000Z")}, "Timestamps in the PM2.5 file"),
+    ({"own": box(stamp="2025-01-03T00:02:27")}, "Timestamps in the PM2.5 file"),  # no Z
+    ({"site": {"ARCHIVE": "Archive"}}, "Licence named in the site's own text"),
+    ({"summary": "<p>Terms apply.</p>"}, "Conditions of that licence"),
+    (
+        {"sample": [box(temperature="nan")]},
+        "temperature against the proposed -60 to 60",
+    ),  # no value
+]
 
 
-@pytest.mark.parametrize("stamp", ["2025-01-02T23:59:00.000Z", "2025-01-03T00:02:27"])
-def test_a_timestamp_on_another_day_or_without_z_differs(stamp):
-    assert differing(own=box(stamp=stamp)) == ["Timestamps in the PM2.5 file"]
+@pytest.mark.parametrize(("inputs", "name"), BROKEN)
+def test_one_broken_input_makes_only_its_own_finding_differ(inputs, name):
+    result = findings(**inputs)
+    assert [found for found, finding in result.items() if finding.matches is False] == [name]
 
 
-def test_a_reading_outside_the_proposed_range_is_counted_and_text_is_skipped():
+def test_a_reading_outside_the_proposed_range_is_counted():
     result = findings(sample=[box(), box(temperature="-146.10")])
     found = result["temperature against the proposed -60 to 60"]
     assert found.matches is False
     assert found.found.startswith("1 of 2 readings outside, in 1 of 2 boxes")
-
-
-def test_a_site_or_a_summary_that_does_not_state_the_licence_differs():
-    assert differing(site={"ARCHIVE": "Archive"}) == ["Licence named in the site's own text"]
-    assert differing(summary="<p>Terms apply.</p>") == ["Conditions of that licence"]
 
 
 CASES = [
@@ -94,9 +93,10 @@ CASES = [
     ("PM2.5", "μg/m³ ", "pm25"),  # a Greek mu, and a trailing space
     ("PM10", "µg/m³", None),
     ("Luftfeuchte", "%rF", "relative_humidity"),
+    ("Feuchtigkeit (Hochbeet)", "% nFK", None),  # soil moisture in a raised bed
+    ("Bodenfeuchte", "%", None),
     ("battery", "%", None),
     ("Temperatur", "K", None),
-    ("Bodentemperatur", "°C", "temperature"),  # soil, not air: a name alone cannot tell
 ]
 
 
