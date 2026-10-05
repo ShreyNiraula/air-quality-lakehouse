@@ -178,7 +178,8 @@ def check(
             conditions is not None,
         ),
     ]
-    source = f"{len(sample)} boxes of {day}, spread over the folder"
+    source = f"the {len(sample)} sampled boxes, under {ARCHIVE}/{day}/"
+    ids = ", ".join(b.url.rstrip("/").rsplit("/", 1)[-1][:24] for b in sample)
     placed = [sensors(b) for b in sample]
     complete = sum(1 for own in placed if set(own) == set(RULES))
     exposure = Counter(str(b.meta.get("exposure")) for b in sample)
@@ -187,6 +188,7 @@ def check(
     skipped = sorted({f"{s.get('title')} [{s.get('unit')}]" for s in every
                       if unit_of(s) in units and not parameter(s)})  # fmt: skip
     findings += [
+        Finding("Boxes sampled, spread over the folder, by id", ids, f"{ARCHIVE}/{day}/"),
         Finding("Where the sampled boxes stand", str(dict(exposure.most_common())), source),
         Finding("Sampled boxes with PM2.5, temperature and humidity", str(complete), source),
         Finding("Sampled sensors in these units that the rule skips", "; ".join(skipped), source),

@@ -32,7 +32,7 @@ def box(sensors=SENSORS, stamp="2025-01-03T00:02:27.710Z", temperature="13.70", 
         "c" * 24: f"createdAt,value\n{stamp},{temperature}\n2025-01-03T00:05:00.000Z,nan\n",
         "d" * 24: f"createdAt,value\n{stamp},99.90\n",
     }
-    return Box("https://example.org/box/", {"exposure": "outdoor", "sensors": sensors}, files)
+    return Box(f"https://example.org/{BOX}", {"exposure": "outdoor", "sensors": sensors}, files)
 
 
 def findings(pages=None, own=None, sample=None, site=SITE, summary=SUMMARY):
@@ -45,6 +45,7 @@ def test_inputs_shaped_like_the_real_ones_match_every_expectation():
     assert [name for name, finding in result.items() if finding.matches is False] == []
     assert "PM2.5 [µg/m³] SDS 011 -> pm25" in result["Sensors of the box"].found
     assert result["Sampled boxes with PM2.5, temperature and humidity"].found == "1"
+    assert result["Boxes sampled, spread over the folder, by id"].found == "a" * 24
     assert result["Names of temperature sensors in the sample"].found == "Temperatur [°C] x1"
     unplaced = result["Sampled sensors in these units that the rule skips"].found
     assert unplaced == "Air T [°C]; Bodentemperatur [°C]; PM10 [µg/m³]"
@@ -64,6 +65,7 @@ def test_days_without_a_folder_are_named_even_when_they_are_the_newest():
 
 
 STAMPS = "Timestamps in the three sensor files of the box"
+RANGE = "temperature against the proposed -60 to 60"
 BROKEN = [
     ({"own": box(sensors=SENSORS[:3])}, f"Sensors of the box; {STAMPS}"),  # no humidity sensor
     ({"own": box(stamp="2025-01-02T23:59:00.000Z")}, STAMPS),
@@ -71,10 +73,7 @@ BROKEN = [
     ({"own": box(stamp="2025-01-02T23:59:00.000Z", pm_stamp="2025-01-03T00:01:00.000Z")}, STAMPS),
     ({"site": {"ARCHIVE": "Archive"}}, "Licence named in the site's own text"),
     ({"summary": "<p>Terms apply.</p>"}, "Conditions of that licence"),
-    (
-        {"sample": [box(temperature="nan")]},
-        "temperature against the proposed -60 to 60",
-    ),  # no value
+    ({"sample": [box(temperature="nan")]}, RANGE),  # no value
 ]
 
 
@@ -88,7 +87,7 @@ def test_ranges_read_every_placed_sensor_and_report_those_with_no_reading():
     two = box(sensors=[*SENSORS, {"_id": "f" * 24, "title": "Temperatur (HECA)", "unit": "°C"}])
     two.files["f" * 24] = "createdAt,value\n2025-01-03T00:02:00.000Z,-146.10\n"
     result = findings(sample=[two, box(temperature="nan")])
-    found = result["temperature against the proposed -60 to 60"]
+    found = result[RANGE]
     assert found.matches is False
     assert "1 of 2 readings outside, in 1 of 2 sensors read; 1 more sensors had no" in found.found
 
