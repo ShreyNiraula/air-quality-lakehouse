@@ -1,0 +1,24 @@
+[project]
+name = "airquality"
+version = "0.1.0"
+description = "Air-quality comparison platform"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.16"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests", ".github/scripts"]
+
+[tool.ruff]
+line-length = 100
+# The board scripts were merged before the linter existed and run on the system Python.
+extend-exclude = [".github"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

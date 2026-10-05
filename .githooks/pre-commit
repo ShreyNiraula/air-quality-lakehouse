@@ -1,0 +1,5 @@
+#!/bin/sh
+# Refuse a commit when the linter or the formatter finds a problem.
+# The tools come from this repository's locked environment, wherever the hook is run from.
+project="$(dirname "$0")/.."
+uv run --project "$project" ruff check . && uv run --project "$project" ruff format --check .
