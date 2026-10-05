@@ -226,17 +226,14 @@ def main() -> int:
     listing = fetch(ARCHIVE + "/")
     day = args.date or max(folders(listing))
     names = BOX_FOLDER.findall(fetch(f"{ARCHIVE}/{day}/"))
-    own = next(name for name in names if name.startswith(BOX))
+    own = next((name for name in names if name.startswith(BOX)), None)
+    if own is None:
+        sys.exit(f"Box {BOX} has no folder on {day}; try another --date.")
     spread_out = names[:: max(1, len(names) // SAMPLE)][:SAMPLE]
-    findings = check(
-        day,
-        listing,
-        len(names),
-        read_box(f"{ARCHIVE}/{day}/{own}"),
-        [read_box(f"{ARCHIVE}/{day}/{name}") for name in spread_out],
-        json.loads(fetch(SITE_TEXT)),
-        fetch(SUMMARY),
-    )
+    box = read_box(f"{ARCHIVE}/{day}/{own}")
+    sample = [read_box(f"{ARCHIVE}/{day}/{name}") for name in spread_out]
+    site, summary = json.loads(fetch(SITE_TEXT)), fetch(SUMMARY)
+    findings = check(day, listing, len(names), box, sample, site, summary)
     command = " ".join(["python -m airquality.checks.opensensemap", *sys.argv[1:]])
     print("openSenseMap check (task 0.5b)")
     print(f"Run at {datetime.now(UTC):%Y-%m-%d %H:%M} UTC with: {command}")
