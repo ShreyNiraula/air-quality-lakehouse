@@ -51,7 +51,7 @@ def folders(listing: str) -> tuple[list[str], dict[date, datetime]]:
 
 
 def climate_files(listing: str) -> list[str]:
-    return re.findall(r'href="([\d-]+_(?:dht22|bme280)_sensor_\d+\.csv)"', listing)
+    return re.findall(r'href="([\d-]+_(?:dht22|bme280)_sensor_\d+\.csv(?:\.gz)?)"', listing)
 
 
 def rows(body: bytes) -> list[dict[str, str]]:
@@ -148,7 +148,7 @@ def check(
         ),
         Finding(
             f"Last-Modified of the two files of {day}, and its folder in the listing",
-            f"{dust.modified}; {climate.modified}; folder {modified[day]}",
+            f"{dust.modified}; {climate.modified}; folder {modified.get(day, 'in a year folder')}",
             f"{dust.url} and {climate.url}",
         ),
         Finding(
@@ -165,9 +165,11 @@ def check(
         Finding("Column sets among the sampled climate files", " | ".join(headers), source)
     )
     for column, (low, high) in RANGES.items():
-        values = [value for body in sample for value in numbers(rows(body), column)]
+        per_file = [numbers(rows(body), column) for body in sample]
+        values = [value for file in per_file for value in file]
         out = sum(1 for value in values if not low <= value <= high)
-        found = f"{out} of {len(values)} readings outside; {spread(values, '')}"
+        bad = sum(1 for file in per_file if any(not low <= value <= high for value in file))
+        found = f"{out} of {len(values)} readings outside, in {bad} files; {spread(values, '')}"
         name = f"{column} against the proposed {low} to {high}"
         findings.append(Finding(name, found, source, "no reading outside", out == 0))
     return findings
@@ -177,7 +179,7 @@ def fetch(url: str) -> Fetched:
     request = urllib.request.Request(url, headers={"Accept-Encoding": "gzip"})
     with urllib.request.urlopen(request, timeout=120) as response:
         body = response.read()
-        if response.headers.get("Content-Encoding") == "gzip":
+        if body[:2] == b"\x1f\x8b":  # sent compressed, or a .csv.gz file from a year folder
             body = gzip.decompress(body)
         return Fetched(url, body, response.headers.get("Last-Modified", "not given"))
 
@@ -189,8 +191,12 @@ def main() -> int:
     listing = fetch(ARCHIVE + "/").body.decode()
     years, modified = folders(listing)
     day = args.date or max(modified)
-    # Days of the years that have a folder sit inside it; later days sit at the top level.
-    folder = f"{ARCHIVE}/{day.year}/{day}/" if str(day.year) in years else f"{ARCHIVE}/{day}/"
+    # Days of the years that have a folder sit inside it, as .csv.gz; later days sit at the top
+    # level, as .csv.
+    in_year = str(day.year) in years
+    folder, suffix = (
+        (f"{ARCHIVE}/{day.year}/{day}/", ".csv.gz") if in_year else (f"{ARCHIVE}/{day}/", ".csv")
+    )
     names = climate_files(fetch(folder).body.decode())
     sample = []
     for name in names[:: max(1, len(names) // SAMPLE)][:SAMPLE]:
@@ -201,8 +207,8 @@ def main() -> int:
         day,
         datetime.now(UTC),
         listing,
-        fetch(f"{folder}{day}_{DUST}.csv"),
-        fetch(f"{folder}{day}_{CLIMATE}.csv"),
+        fetch(f"{folder}{day}_{DUST}{suffix}"),
+        fetch(f"{folder}{day}_{CLIMATE}{suffix}"),
         sample,
         fetch(SITE).body.decode(),
         max(reading["timestamp"] for reading in live).replace(" ", "T"),

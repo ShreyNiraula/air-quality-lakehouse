@@ -1,5 +1,5 @@
 Sensor.Community check (task 0.5)
-Run at 2026-10-05 05:34 UTC with: python -m airquality.checks.sensor_community
+Run at 2026-10-05 05:41 UTC with: python -m airquality.checks.sensor_community
 
 [match  ] Year folders, and day folders at the top level
     expected: years to 2025; 2026 days at the top level
@@ -31,7 +31,7 @@ Run at 2026-10-05 05:34 UTC with: python -m airquality.checks.sensor_community
 
 [match  ] Newest live reading of the dust sensor, minutes before now in UTC
     expected: 0 to 15, which holds only if the timestamps are UTC
-    found:    2.0 (its timestamp is 2026-10-05T05:32:01)
+    found:    2.2 (its timestamp is 2026-10-05T05:39:26)
     source:   https://data.sensor.community/airrohr/v1/sensor/151/
 
 [note   ] Time between readings, dust file
@@ -61,12 +61,12 @@ Run at 2026-10-05 05:34 UTC with: python -m airquality.checks.sensor_community
 
 [match  ] temperature against the proposed -60 to 60
     expected: no reading outside
-    found:    0 of 11485 readings outside; median 15.7, least 6.3, most 39.3
+    found:    0 of 11485 readings outside, in 0 files; median 15.7, least 6.3, most 39.3
     source:   20 dht22 and bme280 files of 2026-10-04, spread over the folder
 
 [match  ] humidity against the proposed 0 to 100
     expected: no reading outside
-    found:    0 of 11485 readings outside; median 85.3, least 1.0, most 100.0
+    found:    0 of 11485 readings outside, in 0 files; median 85.3, least 1.0, most 100.0
     source:   20 dht22 and bme280 files of 2026-10-04, spread over the folder
 
 0 findings differ from plan.md.

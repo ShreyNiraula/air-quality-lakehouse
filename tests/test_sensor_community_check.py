@@ -27,10 +27,10 @@ CLIMATE = """sensor_id;sensor_type;location;lat;lon;timestamp;temperature;humidi
 """
 
 
-def findings(dust=DUST, climate=CLIMATE, page=PAGE, live="2026-03-03T11:57:00"):
+def findings(dust=DUST, climate=CLIMATE, page=PAGE, live="2026-03-03T11:57:00", day=DAY):
     files = [Fetched(f"https://example.org/{name}", body.encode(), "a GMT time") for name, body in
              (("dust.csv", dust), ("climate.csv", climate))]  # fmt: skip
-    result = check(DAY, NOW, LISTING, *files, [climate.encode()], page, live)
+    result = check(day, NOW, LISTING, *files, [climate.encode()], page, live)
     return {finding.name: finding for finding in result}
 
 
@@ -54,9 +54,10 @@ def test_listing_gives_folders_lag_and_climate_files():
     }
     lag = "Hours from the end of a UTC day until its folder was last modified, by the listing"
     assert findings()[lag].found == "median 4.0, least 3.5, most 4.5 hours, over 2 days"
-    assert climate_files(LISTING) == [
+    assert climate_files(LISTING + '<a href="2025-06-01_dht22_sensor_8.csv.gz">') == [
         "2026-03-01_dht22_sensor_8.csv",
         "2026-03-01_bme280_sensor_9.csv",
+        "2025-06-01_dht22_sensor_8.csv.gz",
     ]
 
 
@@ -66,7 +67,8 @@ def test_readings_outside_the_proposed_ranges_differ_and_blanks_are_skipped():
     outside = findings(climate=CLIMATE.replace("15.00;60.00", "-140.00;101.50"))
     for name in names:
         assert inside[name].matches is True and inside[name].found.startswith("0 of 2 readings")
-        assert outside[name].matches is False and outside[name].found.startswith("1 of 2 readings")
+        assert outside[name].matches is False
+        assert outside[name].found.startswith("1 of 2 readings outside, in 1 files")
 
 
 def test_a_dust_row_with_p2_above_p1_differs():
@@ -88,6 +90,13 @@ def test_live_timestamps_in_local_time_differ():
 def test_dust_rows_of_another_day_differ():
     stale = DUST.replace("2026-03-01T23:58:00", "2026-03-02T00:01:00")
     assert findings(dust=stale)["Timestamps in the dust file"].matches is False
+
+
+def test_a_day_kept_in_a_year_folder_is_checked_without_a_top_level_entry():
+    old = findings(day=date(2025, 6, 1), dust=DUST.replace("2026-03-01", "2025-06-01"))
+    name = "Last-Modified of the two files of 2025-06-01, and its folder in the listing"
+    assert old[name].found.endswith("folder in a year folder")
+    assert old["Timestamps in the dust file"].matches is True
 
 
 def test_a_site_without_a_data_licence_link_differs():

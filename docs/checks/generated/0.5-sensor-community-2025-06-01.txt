@@ -1,0 +1,72 @@
+Sensor.Community check (task 0.5)
+Run at 2026-10-05 05:41 UTC with: python -m airquality.checks.sensor_community --date 2025-06-01
+
+[match  ] Year folders, and day folders at the top level
+    expected: years to 2025; 2026 days at the top level
+    found:    years 2015 to 2025; days 2026-01-01 to 2026-10-04
+    source:   https://archive.sensor.community
+
+[note   ] Dust file columns
+    found:    sensor_id;sensor_type;location;lat;lon;timestamp;P1;durP1;ratioP1;P2;durP2;ratioP2
+    source:   https://archive.sensor.community/2025/2025-06-01/2025-06-01_sds011_sensor_151.csv.gz
+
+[note   ] Climate file columns
+    found:    sensor_id;sensor_type;location;lat;lon;timestamp;temperature;humidity
+    source:   https://archive.sensor.community/2025/2025-06-01/2025-06-01_dht22_sensor_152.csv.gz
+
+[match  ] Location id in the dust file and in the climate file
+    expected: the same: the location id joins the two sensors of a box
+    found:    68 and 68
+    source:   https://archive.sensor.community/2025/2025-06-01/2025-06-01_sds011_sensor_151.csv.gz and https://archive.sensor.community/2025/2025-06-01/2025-06-01_dht22_sensor_152.csv.gz
+
+[match  ] Dust rows where P2 is above P1
+    expected: none, if P2 is the finer fraction
+    found:    0 of 580
+    source:   https://archive.sensor.community/2025/2025-06-01/2025-06-01_sds011_sensor_151.csv.gz
+
+[match  ] Timestamps in the dust file
+    expected: all on 2025-06-01
+    found:    first 2025-06-01T00:02:13, last 2025-06-01T23:58:20, written without a UTC offset
+    source:   https://archive.sensor.community/2025/2025-06-01/2025-06-01_sds011_sensor_151.csv.gz
+
+[match  ] Newest live reading of the dust sensor, minutes before now in UTC
+    expected: 0 to 15, which holds only if the timestamps are UTC
+    found:    1.8 (its timestamp is 2026-10-05T05:39:26)
+    source:   https://data.sensor.community/airrohr/v1/sensor/151/
+
+[note   ] Time between readings, dust file
+    found:    median 150.0, least 93.0, most 228.0 seconds
+    source:   https://archive.sensor.community/2025/2025-06-01/2025-06-01_sds011_sensor_151.csv.gz
+
+[note   ] Time between readings, climate file
+    found:    median 150.0, least 145.0, most 170.0 seconds
+    source:   https://archive.sensor.community/2025/2025-06-01/2025-06-01_dht22_sensor_152.csv.gz
+
+[note   ] Hours from the end of a UTC day until its folder was last modified, by the listing
+    found:    median 3.9, least 3.6, most 8.8 hours, over 277 days
+    source:   https://archive.sensor.community
+
+[note   ] Last-Modified of the two files of 2025-06-01, and its folder in the listing
+    found:    Mon, 02 Jun 2025 03:26:17 GMT; Mon, 02 Jun 2025 03:32:33 GMT; folder in a year folder
+    source:   https://archive.sensor.community/2025/2025-06-01/2025-06-01_sds011_sensor_151.csv.gz and https://archive.sensor.community/2025/2025-06-01/2025-06-01_dht22_sensor_152.csv.gz
+
+[match  ] Licence links on the Sensor.Community site
+    expected: a licence for the data is named
+    found:    Firmware License -> https://www.gnu.org/licenses/gpl-3.0.en.html; DB Contents License -> https://opendatacommons.org/licenses/dbcl/1-0/; Photos License -> https://creativecommons.org/publicdomain/zero/1.0/deed.de
+    source:   https://sensor.community/en/
+
+[note   ] Column sets among the sampled climate files
+    found:    sensor_id;sensor_type;location;lat;lon;timestamp;pressure;altitude;pressure_sealevel;temperature;humidity | sensor_id;sensor_type;location;lat;lon;timestamp;temperature;humidity
+    source:   20 dht22 and bme280 files of 2025-06-01, spread over the folder
+
+[DIFFERS] temperature against the proposed -60 to 60
+    expected: no reading outside
+    found:    512 of 11735 readings outside, in 2 files; median 22.2, least -146.1, most 51.8
+    source:   20 dht22 and bme280 files of 2025-06-01, spread over the folder
+
+[match  ] humidity against the proposed 0 to 100
+    expected: no reading outside
+    found:    0 of 11734 readings outside, in 0 files; median 78.8, least 22.1, most 100.0
+    source:   20 dht22 and bme280 files of 2025-06-01, spread over the folder
+
+1 findings differ from plan.md.
