@@ -48,15 +48,15 @@ def test_file_shaped_like_the_real_ones_matches_every_expectation():
 
 
 def test_hours_named_by_their_start_differ():
-    result = findings(day_file(first_hour=0))
-    assert result["Timestamps name each hour by its"].matches is False
-    assert result["Field names"].matches is True
+    assert findings(day_file(first_hour=0))["Timestamps name each hour by its"].matches is False
 
 
-def test_another_unit_differs_before_and_after_normalizing():
+def test_another_unit_differs_and_padding_is_stripped_before_normalizing():
+    rule = "PM2.5 unit after strip and NFKC, as the unit rule compares it"
     result = findings(day_file(unit="mg/m³"))
     assert result["PM2.5 unit text"].matches is False
-    assert result["PM2.5 unit after NFKC, as the unit rule compares it"].matches is False
+    assert result[rule].matches is False
+    assert findings(day_file(unit=f" {MICROGRAMS} "))[rule].matches is True
 
 
 def test_renamed_field_or_empty_file_is_reported_and_ends_the_check():
@@ -69,11 +69,11 @@ def test_renamed_field_or_empty_file_is_reported_and_ends_the_check():
     assert empty["Rows in the file"].matches is False
 
 
-def test_half_hourly_rows_differ():
-    lines = gzip.decompress(day_file(hours=2)).decode().splitlines()
+def test_one_half_hour_gap_among_hourly_rows_differs():
+    lines = gzip.decompress(day_file()).decode().splitlines()
     lines.insert(2, lines[1].replace("T01:00:00", "T01:30:00"))
     raw = gzip.compress("\n".join(lines).encode())
-    assert findings(raw)["Usual time between rows of one sensor"].matches is False
+    assert findings(raw)["Times between rows of one sensor"].matches is False
 
 
 def test_hour_labels_needs_a_boundary_hour_to_decide():
@@ -106,9 +106,8 @@ def test_lag_is_counted_from_the_end_of_the_local_day():
     across = {date(2026, 3, 27): datetime(2026, 3, 30, 23, tzinfo=UTC)}
     across[date(2026, 3, 29)] = datetime(2026, 4, 1, 22, tzinfo=UTC)
     assert lag_hours(across, BERLIN) == [72.0, 72.0]
-    assert findings(day_file())[
-        "Hours from the end of the local day until the file is written"
-    ].found.startswith("median 72.0")
+    lag = "Hours from the end of the local day until the file was last written"
+    assert findings(day_file())[lag].found.startswith("median 72.0")
 
 
 def test_days_past_the_lag_without_a_file_are_counted():

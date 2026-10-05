@@ -1,5 +1,5 @@
 OpenAQ archive day file check (task 0.4)
-Run at 2026-10-05 05:13 UTC with: python -m airquality.checks.openaq_file
+Run at 2026-10-05 05:19 UTC with: python -m airquality.checks.openaq_file
 File: https://openaq-data-archive.s3.amazonaws.com/records/csv.gz/locationid=2178/year=2026/month=09/location-2178-20260921.csv.gz
 Station timezone, as given: America/Denver
 
@@ -22,7 +22,7 @@ Station timezone, as given: America/Denver
     expected: µg/m³ (U+00B5 U+0067 U+002F U+006D U+00B3)
     found:    µg/m³ (U+00B5 U+0067 U+002F U+006D U+00B3)
 
-[match  ] PM2.5 unit after NFKC, as the unit rule compares it
+[match  ] PM2.5 unit after strip and NFKC, as the unit rule compares it
     expected: μg/m3 (U+03BC U+0067 U+002F U+006D U+0033)
     found:    μg/m3 (U+03BC U+0067 U+002F U+006D U+0033)
 
@@ -37,15 +37,15 @@ Station timezone, as given: America/Denver
     expected: end
     found:    end (first 2026-09-21T02:00:00-06:00, last 2026-09-22T00:00:00-06:00)
 
-[match  ] Usual time between rows of one sensor
-    expected: 1:00:00
-    found:    1:00:00
+[match  ] Times between rows of one sensor
+    expected: whole hours from 1:00:00
+    found:    1:00:00 x65, 2:00:00 x5, 4:00:00 x1
 
-[match  ] Hours from the end of the local day until the file is written
+[match  ] Hours from the end of the local day until the file was last written
     expected: 72 to 96
     found:    median 72.0, least 72.0, most 72.0, over 51 files
 
 [note   ] Newest day with a file
-    found:    2026-09-21, written 2026-09-25T06:00:42+00:00; 9 later days are due by that lag and have no file
+    found:    2026-09-21, last written 2026-09-25T06:00:42+00:00; 9 later days are due by that lag and have no file
 
 0 findings differ from plan.md.

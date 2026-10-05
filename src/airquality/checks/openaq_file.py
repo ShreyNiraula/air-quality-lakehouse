@@ -44,7 +44,7 @@ def month_prefix(location: int, month: date) -> str:
 
 
 def parse_listing(xml_text: str) -> dict[date, datetime]:
-    """The day each listed file is for, and when the archive last wrote it."""
+    """The day each listed file is for, and when the archive last wrote it, patches included."""
     files = {}
     for item in ET.fromstring(xml_text).iter(f"{S3}Contents"):
         stamp = item.findtext(f"{S3}Key").rsplit("-", 1)[1].removesuffix(".csv.gz")
@@ -115,7 +115,9 @@ def check(
         for series in by_sensor.values()
         for earlier, later in zip(sorted(series), sorted(series)[1:], strict=False)
     )
-    gap = gaps.most_common(1)[0][0] if gaps else None
+    hour = timedelta(hours=1)
+    hourly = min(gaps) == hour and not any(gap % hour for gap in gaps) if gaps else None
+    spacing = ", ".join(f"{gap} x{n}" for gap, n in sorted(gaps.items())) or "one row per sensor"
     in_zone = [stamp.astimezone(zone) for stamp in stamps]
     labels = hour_labels(day, stamps)
     lags = lag_hours(files, zone)
@@ -135,10 +137,10 @@ def check(
             unit == EXPECTED_PM25_UNIT,
         ),
         Finding(
-            "PM2.5 unit after NFKC, as the unit rule compares it",
+            "PM2.5 unit after strip and NFKC, as the unit rule compares it",
             code_points(NORMALIZED_PM25_UNIT),
-            code_points(unicodedata.normalize("NFKC", unit)),
-            unicodedata.normalize("NFKC", unit) == NORMALIZED_PM25_UNIT,
+            code_points(unicodedata.normalize("NFKC", unit.strip())),
+            unicodedata.normalize("NFKC", unit.strip()) == NORMALIZED_PM25_UNIT,
         ),
         Finding(
             "Sensors in the file: parameter, unit, sensor id, rows",
@@ -157,11 +159,9 @@ def check(
             f"{labels} (first {min(stamps).isoformat()}, last {max(stamps).isoformat()})",
             labels == "end",
         ),
+        Finding("Times between rows of one sensor", "whole hours from 1:00:00", spacing, hourly),
         Finding(
-            "Usual time between rows of one sensor", "1:00:00", str(gap), gap == timedelta(hours=1)
-        ),
-        Finding(
-            "Hours from the end of the local day until the file is written",
+            "Hours from the end of the local day until the file was last written",
             f"{low} to {high}",
             f"{spread}, over {len(files)} files",
             low <= lag <= high,
@@ -169,7 +169,7 @@ def check(
         Finding(
             "Newest day with a file",
             None,
-            f"{newest}, written {files[newest].isoformat()}; "
+            f"{newest}, last written {files[newest].isoformat()}; "
             f"{overdue} later days are due by that lag and have no file",
         ),
     ]
