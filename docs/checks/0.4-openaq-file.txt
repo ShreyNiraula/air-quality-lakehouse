@@ -1,0 +1,46 @@
+OpenAQ archive day file check (task 0.4)
+Run at 2026-10-05 05:01 UTC with: python -m airquality.checks.openaq_file
+File: https://openaq-data-archive.s3.amazonaws.com/records/csv.gz/locationid=2178/year=2026/month=09/location-2178-20260921.csv.gz
+
+[match  ] Download without credentials
+    expected: works
+    found:    works, 600 bytes
+
+[match  ] Field names
+    expected: location_id,sensors_id,location,datetime,lat,lon,parameter,units,value
+    found:    location_id,sensors_id,location,datetime,lat,lon,parameter,units,value
+
+[note   ] Header line as written
+    found:    "location_id","sensors_id","location","datetime","lat","lon","parameter","units","value"
+
+[match  ] Rows in the file
+    expected: at least 1
+    found:    78
+
+[match  ] PM2.5 unit text
+    expected: µg/m³ (U+00B5 U+0067 U+002F U+006D U+00B3)
+    found:    µg/m³ (U+00B5 U+0067 U+002F U+006D U+00B3)
+
+[match  ] PM2.5 unit after NFKC, as the unit rule compares it
+    expected: μg/m3 (U+03BC U+0067 U+002F U+006D U+0033)
+    found:    μg/m3 (U+03BC U+0067 U+002F U+006D U+0033)
+
+[note   ] Sensors in the file: parameter, unit, sensor id, rows
+    found:    co ppm 25227 6; no ppm 4272226 9; no2 ppm 3916 9; nox ppm 4272103 9; o3 ppm 3917 9; pm10 µg/m³ 3919 18; pm25 µg/m³ 3920 18
+
+[match  ] Timestamps name each hour by its
+    expected: end
+    found:    end (first 2026-09-21T02:00:00-06:00, last 2026-09-22T00:00:00-06:00)
+
+[match  ] Usual time between rows of one sensor
+    expected: 1:00:00
+    found:    1:00:00
+
+[match  ] Hours from the end of the local day until the file is written
+    expected: 72 to 96
+    found:    median 72.0, least 72.0, most 72.0, over 51 files
+
+[note   ] Newest day with a file
+    found:    2026-09-21, written 2026-09-25T06:00:42+00:00; 9 later days are due by that lag and have no file
+
+0 findings differ from plan.md.

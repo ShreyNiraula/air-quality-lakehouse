@@ -69,7 +69,7 @@ flowchart LR
 - [ ] **0.3 dbt check.** dbt builds one model into that Iceberg catalog. The dbt and DuckDB versions are pinned as tested.
   Needs: 0.2. Done when: one command builds the model, or the fallback is recorded with the reason.
 
-- [ ] **0.4 OpenAQ file check.** Download one real day file without credentials and compare it with what the plan expects: header, exact unit text, hour convention, and how many days late files arrive.
+- [x] **0.4 OpenAQ file check.** Download one real day file without credentials and compare it with what the plan expects: header, exact unit text, hour convention, and how many days late files arrive.
   Needs: 0.1. Done when: a script prints each finding next to the expected value.
 
 - [ ] **0.5 Sensor.Community check.** The licence read from a primary source. The columns of a dust file and of a temperature and humidity file, how the two join, how far apart readings are, and how many days late files arrive. The proposed valid ranges compared with real values.
