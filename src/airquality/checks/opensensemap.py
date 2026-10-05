@@ -72,12 +72,12 @@ def parameter(sensor: dict) -> str | None:
     return None
 
 
-def sensors(box: Box) -> dict[str, dict]:
-    """The first sensor of each parameter in a box."""
+def sensors(box: Box) -> dict[str, list[dict]]:
+    """Every sensor of a box that `RULES` places, by its parameter."""
     placed = {}
     for sensor in box.meta.get("sensors", []):
-        placed.setdefault(parameter(sensor), sensor)
-    placed.pop(None, None)
+        if name := parameter(sensor):
+            placed.setdefault(name, []).append(sensor)
     return placed
 
 
@@ -114,7 +114,7 @@ def check(
     lags = [(modified[d] - datetime.fromisoformat(f"{d}T00:00+00:00")).total_seconds() / 3600 - 24
             for d in sorted(modified)[-30:]]  # fmt: skip
     own = sensors(box)
-    files = {name: box.files.get(sensor["_id"], "") for name, sensor in own.items()}
+    files = {name: box.files.get(group[0]["_id"], "") for name, group in own.items()}
     stamps = [stamp for text in files.values() for stamp, _ in readings(text)]
     heads = {text.split("\n", 1)[0].strip() for text in box.files.values()}
     licences = sorted({text for text in site.values() if "opendatacommons.org" in str(text)})
@@ -192,19 +192,19 @@ def check(
         Finding("Sampled sensors in these units that the rule skips", "; ".join(skipped), source),
     ]
     for name in RULES:
-        named = Counter(f"{own[name]['title']} [{own[name]['unit']}]" for own in placed
-                        if name in own)  # fmt: skip
+        named = Counter(f"{s['title']} [{s.get('unit')}]" for own in placed
+                        for s in own.get(name, []))  # fmt: skip
         found = "; ".join(f"{label} x{count}" for label, count in named.most_common())
         findings.append(Finding(f"Names of {name} sensors in the sample", found, source))
     for name, (low, high) in RANGES.items():
-        per_box = [[value for _, value in readings(b.files.get(own[name]["_id"], ""))]
-                   for b, own in zip(sample, placed, strict=True) if name in own]  # fmt: skip
-        read = [box_values for box_values in per_box if box_values]
-        values = [value for box_values in read for value in box_values]
+        each = [[value for _, value in readings(b.files.get(s["_id"], ""))]
+                for b, o in zip(sample, placed, strict=True) for s in o.get(name, [])]  # fmt: skip
+        read = [one for one in each if one]
+        values = [value for one in read for value in one]
         out = sum(1 for value in values if not low <= value <= high)
-        bad = sum(1 for box_values in read if any(not low <= v <= high for v in box_values))
-        found = f"{out} of {len(values)} readings outside, in {bad} of {len(read)} boxes read"
-        found += f"; {len(per_box) - len(read)} more boxes had no reading; {spread(values, '')}"
+        bad = sum(1 for one in read if any(not low <= value <= high for value in one))
+        found = f"{out} of {len(values)} readings outside, in {bad} of {len(read)} sensors read"
+        found += f"; {len(each) - len(read)} more sensors had no reading; {spread(values, '')}"
         title = f"{name} against the proposed {low} to {high}"
         matches = bool(values) and out == 0  # nothing read proves nothing
         findings.append(Finding(title, found, source, "readings, and none outside", matches))
@@ -223,7 +223,7 @@ def read_box(url: str) -> Box:
     names = re.findall(r'href="\./([^"]+)"', fetch(url))
     described = [name for name in names if name.endswith(".json")]
     meta = json.loads(fetch(url + described[0])) if described else {}
-    wanted = {sensor["_id"] for sensor in sensors(Box(url, meta, {})).values()}
+    wanted = {s["_id"] for group in sensors(Box(url, meta, {})).values() for s in group}
     files = {name[:24]: fetch(url + name) for name in names if name[:24] in wanted}
     return Box(url, meta, files)
 

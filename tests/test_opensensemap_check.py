@@ -84,11 +84,13 @@ def test_one_broken_input_makes_only_its_own_finding_differ(inputs, name):
     assert [found for found, finding in result.items() if finding.matches is False] == [name]
 
 
-def test_a_reading_outside_the_range_is_counted_and_a_box_with_no_reading_is_reported():
-    result = findings(sample=[box(), box(temperature="-146.10"), box(temperature="nan")])
+def test_ranges_read_every_placed_sensor_and_report_those_with_no_reading():
+    two = box(sensors=[*SENSORS, {"_id": "f" * 24, "title": "Temperatur (HECA)", "unit": "°C"}])
+    two.files["f" * 24] = "createdAt,value\n2025-01-03T00:02:00.000Z,-146.10\n"
+    result = findings(sample=[two, box(temperature="nan")])
     found = result["temperature against the proposed -60 to 60"]
     assert found.matches is False
-    assert "1 of 2 readings outside, in 1 of 2 boxes read; 1 more boxes had no" in found.found
+    assert "1 of 2 readings outside, in 1 of 2 sensors read; 1 more sensors had no" in found.found
 
 
 CASES = [
