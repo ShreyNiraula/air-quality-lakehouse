@@ -2,10 +2,12 @@
 
 import gzip
 from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from airquality.checks.openaq_file import check, hour_labels, lag_hours, parse_listing
 
 DAY = date(2026, 1, 10)
+BERLIN = ZoneInfo("Europe/Berlin")  # UTC+1 in January
 MICROGRAMS = "µg/m³"
 LISTING = """<?xml version="1.0" encoding="UTF-8"?>
 <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
@@ -16,19 +18,21 @@ LISTING = """<?xml version="1.0" encoding="UTF-8"?>
 </ListBucketResult>"""
 
 
-def day_file(first_hour=1, hours=24, unit=MICROGRAMS, header=None):
-    """A gzipped day file for one PM2.5 sensor at UTC+1, with every field quoted as OpenAQ does."""
+def day_file(first_hour=1, hours=24, unit=MICROGRAMS, header=None, offset="+01:00"):
+    """A gzipped day file for one PM2.5 sensor in Berlin, with every field quoted as OpenAQ does."""
     names = "location_id,sensors_id,location,datetime,lat,lon,parameter,units,value".split(",")
     lines = [header or ",".join(f'"{name}"' for name in names)]
     start = datetime(DAY.year, DAY.month, DAY.day)
     for hour in range(first_hour, first_hour + hours):
-        stamp = (start + timedelta(hours=hour)).isoformat() + "+01:00"
+        stamp = (start + timedelta(hours=hour)).isoformat() + offset
         lines.append(f'7,70,"Made up","{stamp}","1.0","2.0","pm25","{unit}","{hour}.5"')
     return gzip.compress("\n".join(lines).encode("utf-8"))
 
 
 def findings(raw, now=datetime(2026, 1, 14, 12, tzinfo=UTC)):
-    return {finding.name: finding for finding in check(DAY, raw, parse_listing(LISTING), now)}
+    return {
+        finding.name: finding for finding in check(DAY, raw, parse_listing(LISTING), now, BERLIN)
+    }
 
 
 def test_file_shaped_like_the_real_ones_matches_every_expectation():
@@ -74,10 +78,20 @@ def test_hour_labels_needs_a_boundary_hour_to_decide():
     assert hour_labels(DAY, [datetime(2026, 1, 10, 0), datetime(2026, 1, 11, 0)]) == "unclear"
 
 
+def test_timestamps_in_another_zone_than_the_station_differ():
+    name = "UTC offset of the timestamps, against Europe/Berlin at those times"
+    assert findings(day_file())[name].matches is True
+    assert findings(day_file(offset="+00:00"))[name].matches is False
+
+
 def test_lag_is_counted_from_the_end_of_the_local_day():
     # The local day of 10 January at UTC+1 ends at 23:00 UTC; the listing says 72 hours later.
-    lags = lag_hours(parse_listing(LISTING), timedelta(hours=1))
+    lags = lag_hours(parse_listing(LISTING), BERLIN)
     assert [round(lag, 1) for lag in lags] == [72.0, 72.0]
+    # Summer time starts in Berlin on 29 March 2026, so that local day ends at 22:00 UTC.
+    across = {date(2026, 3, 27): datetime(2026, 3, 30, 23, tzinfo=UTC)}
+    across[date(2026, 3, 29)] = datetime(2026, 4, 1, 22, tzinfo=UTC)
+    assert lag_hours(across, BERLIN) == [72.0, 72.0]
     assert findings(day_file())[
         "Hours from the end of the local day until the file is written"
     ].found.startswith("median 72.0")

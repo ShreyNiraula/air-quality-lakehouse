@@ -1,6 +1,7 @@
 OpenAQ archive day file check (task 0.4)
-Run at 2026-10-05 05:01 UTC with: python -m airquality.checks.openaq_file
+Run at 2026-10-05 05:07 UTC with: python -m airquality.checks.openaq_file
 File: https://openaq-data-archive.s3.amazonaws.com/records/csv.gz/locationid=2178/year=2026/month=09/location-2178-20260921.csv.gz
+Station timezone, as given: America/Denver
 
 [match  ] Download without credentials
     expected: works
@@ -27,6 +28,10 @@ File: https://openaq-data-archive.s3.amazonaws.com/records/csv.gz/locationid=217
 
 [note   ] Sensors in the file: parameter, unit, sensor id, rows
     found:    co ppm 25227 6; no ppm 4272226 9; no2 ppm 3916 9; nox ppm 4272103 9; o3 ppm 3917 9; pm10 µg/m³ 3919 18; pm25 µg/m³ 3920 18
+
+[match  ] UTC offset of the timestamps, against America/Denver at those times
+    expected: -06:00
+    found:    -06:00
 
 [match  ] Timestamps name each hour by its
     expected: end

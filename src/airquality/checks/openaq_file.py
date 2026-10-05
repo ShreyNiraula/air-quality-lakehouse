@@ -1,9 +1,11 @@
 """Task 0.4: compare a real OpenAQ archive day file with what `plan.md` expects.
 
-    uv run python -m airquality.checks.openaq_file [--location 2178] [--date 2026-09-18]
+    uv run python -m airquality.checks.openaq_file [--date 2026-09-18]
+    uv run python -m airquality.checks.openaq_file --location <id> --timezone <IANA name>
 
 The archive is read over HTTPS without credentials. Each finding is printed next to the expected
-value. The exit code is 1 if a finding differs from its expectation.
+value. The exit code is 1 if a finding differs from its expectation. The station's timezone is
+given, not looked up: the OpenAQ API that holds it needs a key.
 """
 
 import argparse
@@ -18,12 +20,14 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 ARCHIVE = "https://openaq-data-archive.s3.amazonaws.com"
 S3 = "{http://s3.amazonaws.com/doc/2006-03-01/}"
 EXPECTED_FIELDS = "location_id,sensors_id,location,datetime,lat,lon,parameter,units,value"
 EXPECTED_PM25_UNIT = "µg/m³"  # micro sign and superscript three, as OpenAQ documents it
 NORMALIZED_PM25_UNIT = "μg/m3"  # Greek mu and a plain 3: what the unit rule compares
+DEFAULT_LOCATION, DEFAULT_TIMEZONE = 2178, "America/Denver"  # Del Norte, Albuquerque
 EXPECTED_LAG_HOURS = (72, 96)  # documented: 72 h after the day ends; seen: four days after the day
 
 
@@ -67,20 +71,24 @@ def hour_labels(day: date, stamps: list[datetime]) -> str:
     return "unclear"
 
 
-def lag_hours(files: dict[date, datetime], offset: timedelta) -> list[float]:
+def lag_hours(files: dict[date, datetime], zone: ZoneInfo) -> list[float]:
     """Hours from the end of each file's local day to when the archive wrote it."""
-    day_ends = {
-        day: datetime.combine(day, time(), UTC) + timedelta(days=1) - offset for day in files
-    }
+    day_ends = {day: datetime.combine(day + timedelta(days=1), time(), zone) for day in files}
     return [(files[day] - day_ends[day]).total_seconds() / 3600 for day in files]
+
+
+def offsets(stamps: list[datetime]) -> str:
+    return ", ".join(sorted({stamp.isoformat()[-6:] for stamp in stamps}))
 
 
 def code_points(text: str) -> str:
     return f"{text} ({' '.join(f'U+{ord(char):04X}' for char in text)})"
 
 
-def check(day: date, raw: bytes, files: dict[date, datetime], now: datetime) -> list[Finding]:
-    """Every finding for one day file and the listing it came from."""
+def check(
+    day: date, raw: bytes, files: dict[date, datetime], now: datetime, zone: ZoneInfo
+) -> list[Finding]:
+    """Every finding for one day file and the listing it came from, for a station in `zone`."""
     header, rows = parse_day_file(raw)
     fields = ",".join(next(csv.reader([header])))
     start = [
@@ -103,13 +111,13 @@ def check(day: date, raw: bytes, files: dict[date, datetime], now: datetime) -> 
         for earlier, later in zip(sorted(series), sorted(series)[1:], strict=False)
     )
     gap = gaps.most_common(1)[0][0] if gaps else None
-    offset = stamps[0].utcoffset()
+    in_zone = [stamp.astimezone(zone) for stamp in stamps]
     labels = hour_labels(day, stamps)
-    lags = lag_hours(files, offset)
+    lags = lag_hours(files, zone)
     lag = statistics.median(lags)
     newest = max(files)
     # A day is due once the usual lag has passed since its local end.
-    last_due = (now.astimezone(UTC) - timedelta(hours=lag) + offset).date() - timedelta(days=1)
+    last_due = (now - timedelta(hours=lag)).astimezone(zone).date() - timedelta(days=1)
     overdue = max(0, (last_due - newest).days)
     spread = f"median {lag:.1f}, least {min(lags):.1f}, most {max(lags):.1f}"
     low, high = EXPECTED_LAG_HOURS
@@ -131,6 +139,12 @@ def check(day: date, raw: bytes, files: dict[date, datetime], now: datetime) -> 
             "Sensors in the file: parameter, unit, sensor id, rows",
             None,
             "; ".join(f"{p} {u} {s} {n}" for (p, u, s), n in sorted(sensors.items())),
+        ),
+        Finding(
+            f"UTC offset of the timestamps, against {zone.key} at those times",
+            offsets(in_zone),
+            offsets(stamps),
+            offsets(stamps) == offsets(in_zone),
         ),
         Finding(
             "Timestamps name each hour by its",
@@ -163,11 +177,15 @@ def fetch(path: str) -> bytes:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--location", type=int, default=2178)
+    parser.add_argument("--location", type=int, default=DEFAULT_LOCATION)
+    parser.add_argument("--timezone", help="the station's IANA timezone")
     parser.add_argument(
         "--date", type=date.fromisoformat, help="default: the newest day with a file"
     )
     args = parser.parse_args()
+    if args.timezone is None and args.location != DEFAULT_LOCATION:
+        parser.error("--timezone is needed for a location other than the default")
+    zone = ZoneInfo(args.timezone or DEFAULT_TIMEZONE)
     now = datetime.now(UTC)
 
     files: dict[date, datetime] = {}
@@ -187,8 +205,9 @@ def main() -> int:
     command = " ".join(["python -m airquality.checks.openaq_file", *sys.argv[1:]])
     print(f"Run at {now:%Y-%m-%d %H:%M} UTC with: {command}")
     print(f"File: {ARCHIVE}/{path}")
+    print(f"Station timezone, as given: {zone.key}")
     downloaded = Finding("Download without credentials", "works", f"works, {len(raw)} bytes", True)
-    findings = [downloaded, *check(day, raw, files, now)]
+    findings = [downloaded, *check(day, raw, files, now, zone)]
     for finding in findings:
         status = {None: "note   ", True: "match  ", False: "DIFFERS"}[finding.matches]
         print(f"\n[{status}] {finding.name}")
