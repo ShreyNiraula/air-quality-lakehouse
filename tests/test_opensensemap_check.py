@@ -65,7 +65,7 @@ def test_days_without_a_folder_are_named_even_when_they_are_the_newest():
 
 STAMPS = "Timestamps in the three sensor files of the box"
 BROKEN = [
-    ({"own": box(sensors=SENSORS[:3])}, "Sensors of the box"),
+    ({"own": box(sensors=SENSORS[:3])}, f"Sensors of the box; {STAMPS}"),  # no humidity sensor
     ({"own": box(stamp="2025-01-02T23:59:00.000Z")}, STAMPS),
     ({"own": box(stamp="2025-01-03T00:02:27")}, STAMPS),  # no Z
     ({"own": box(stamp="2025-01-02T23:59:00.000Z", pm_stamp="2025-01-03T00:01:00.000Z")}, STAMPS),
@@ -79,9 +79,9 @@ BROKEN = [
 
 
 @pytest.mark.parametrize(("inputs", "name"), BROKEN)
-def test_one_broken_input_makes_only_its_own_finding_differ(inputs, name):
+def test_one_broken_input_makes_only_its_own_findings_differ(inputs, name):
     result = findings(**inputs)
-    assert [found for found, finding in result.items() if finding.matches is False] == [name]
+    assert "; ".join(found for found, f in result.items() if f.matches is False) == name
 
 
 def test_ranges_read_every_placed_sensor_and_report_those_with_no_reading():

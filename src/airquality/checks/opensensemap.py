@@ -114,7 +114,7 @@ def check(
     lags = [(modified[d] - datetime.fromisoformat(f"{d}T00:00+00:00")).total_seconds() / 3600 - 24
             for d in sorted(modified)[-30:]]  # fmt: skip
     own = sensors(box)
-    files = {name: box.files.get(group[0]["_id"], "") for name, group in own.items()}
+    files = {name: box.files.get(own[name][0]["_id"], "") if name in own else "" for name in RULES}
     stamps = [stamp for text in files.values() for stamp, _ in readings(text)]
     heads = {text.split("\n", 1)[0].strip() for text in box.files.values()}
     licences = sorted({text for text in site.values() if "opendatacommons.org" in str(text)})
