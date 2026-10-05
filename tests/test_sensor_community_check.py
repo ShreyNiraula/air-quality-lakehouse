@@ -17,12 +17,12 @@ PAGE = """<a href=https://www.gnu.org/licenses/gpl-3.0.en.html class="x">Firmwar
 <a href="https://archive.sensor.community/">Archive</a>"""
 DUST = """sensor_id;sensor_type;location;lat;lon;timestamp;P1;durP1;ratioP1;P2;durP2;ratioP2
 7;SDS011;5;1.0;2.0;2026-03-01T00:01:00;11.00;;;8.50;;
-7;SDS011;5;1.0;2.0;2026-03-01T00:03:30;12.00;;;13.00;;
+7;SDS011;5;1.0;2.0;2026-03-01T00:03:30;12.00;;;9.00;;
 7;SDS011;5;1.0;2.0;2026-03-01T23:58:00;10.00;;;;;
 """
 CLIMATE = """sensor_id;sensor_type;location;lat;lon;timestamp;temperature;humidity
 8;DHT22;5;1.0;2.0;2026-03-01T00:01:00;14.30;52.80
-8;DHT22;5;1.0;2.0;2026-03-01T00:03:30;-140.00;101.50
+8;DHT22;5;1.0;2.0;2026-03-01T00:03:30;15.00;60.00
 8;DHT22;5;1.0;2.0;2026-03-01T00:06:00;;nan
 """
 
@@ -37,7 +37,7 @@ def findings(dust=DUST, climate=CLIMATE, page=PAGE, live="2026-03-03T11:57:00"):
 def test_inputs_shaped_like_the_real_ones_match_every_expectation():
     result = findings()
     assert [name for name, finding in result.items() if finding.matches is False] == []
-    assert result["Dust rows where P2 is above P1"].found == "1 of 3"
+    assert result["Dust rows where P2 is above P1"].found == "0 of 3"
     spacing = result["Time between readings, dust file"].found
     assert spacing == "median 43110.0, least 150.0, most 86070.0 seconds"
     headers = result["Column sets among the sampled climate files"].found
@@ -60,10 +60,18 @@ def test_listing_gives_folders_lag_and_climate_files():
     ]
 
 
-def test_readings_outside_the_proposed_ranges_are_counted_and_blanks_are_skipped():
-    result = findings()
-    assert result["temperature against the proposed -60 to 60"].found.startswith("1 of 2 readings")
-    assert result["humidity against the proposed 0 to 100"].found.startswith("1 of 2 readings")
+def test_readings_outside_the_proposed_ranges_differ_and_blanks_are_skipped():
+    names = ("temperature against the proposed -60 to 60", "humidity against the proposed 0 to 100")
+    inside = findings()
+    outside = findings(climate=CLIMATE.replace("15.00;60.00", "-140.00;101.50"))
+    for name in names:
+        assert inside[name].matches is True and inside[name].found.startswith("0 of 2 readings")
+        assert outside[name].matches is False and outside[name].found.startswith("1 of 2 readings")
+
+
+def test_a_dust_row_with_p2_above_p1_differs():
+    result = findings(dust=DUST.replace(";9.00;", ";13.00;"))
+    assert result["Dust rows where P2 is above P1"].matches is False
 
 
 def test_sensors_at_different_locations_differ():

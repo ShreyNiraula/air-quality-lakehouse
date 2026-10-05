@@ -118,7 +118,13 @@ def check(
             "the same: the location id joins the two sensors of a box",
             places[0] == places[1],
         ),
-        Finding("Dust rows where P2 is above P1", f"{swapped} of {len(dust_rows)}", dust.url),
+        Finding(
+            "Dust rows where P2 is above P1",
+            f"{swapped} of {len(dust_rows)}",
+            dust.url,
+            "none, if P2 is the finer fraction",
+            swapped == 0,
+        ),
         Finding(
             "Timestamps in the dust file",
             f"first {min(stamps)}, last {max(stamps)}, written without a UTC offset",
@@ -162,7 +168,8 @@ def check(
         values = [value for body in sample for value in numbers(rows(body), column)]
         out = sum(1 for value in values if not low <= value <= high)
         found = f"{out} of {len(values)} readings outside; {spread(values, '')}"
-        findings.append(Finding(f"{column} against the proposed {low} to {high}", found, source))
+        name = f"{column} against the proposed {low} to {high}"
+        findings.append(Finding(name, found, source, "no reading outside", out == 0))
     return findings
 
 

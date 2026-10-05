@@ -1,5 +1,5 @@
 Sensor.Community check (task 0.5)
-Run at 2026-10-05 05:29 UTC with: python -m airquality.checks.sensor_community
+Run at 2026-10-05 05:34 UTC with: python -m airquality.checks.sensor_community
 
 [match  ] Year folders, and day folders at the top level
     expected: years to 2025; 2026 days at the top level
@@ -19,7 +19,8 @@ Run at 2026-10-05 05:29 UTC with: python -m airquality.checks.sensor_community
     found:    68 and 68
     source:   https://archive.sensor.community/2026-10-04/2026-10-04_sds011_sensor_151.csv and https://archive.sensor.community/2026-10-04/2026-10-04_dht22_sensor_152.csv
 
-[note   ] Dust rows where P2 is above P1
+[match  ] Dust rows where P2 is above P1
+    expected: none, if P2 is the finer fraction
     found:    0 of 573
     source:   https://archive.sensor.community/2026-10-04/2026-10-04_sds011_sensor_151.csv
 
@@ -30,7 +31,7 @@ Run at 2026-10-05 05:29 UTC with: python -m airquality.checks.sensor_community
 
 [match  ] Newest live reading of the dust sensor, minutes before now in UTC
     expected: 0 to 15, which holds only if the timestamps are UTC
-    found:    2.1 (its timestamp is 2026-10-05T05:27:02)
+    found:    2.0 (its timestamp is 2026-10-05T05:32:01)
     source:   https://data.sensor.community/airrohr/v1/sensor/151/
 
 [note   ] Time between readings, dust file
@@ -58,11 +59,13 @@ Run at 2026-10-05 05:29 UTC with: python -m airquality.checks.sensor_community
     found:    sensor_id;sensor_type;location;lat;lon;timestamp;pressure;altitude;pressure_sealevel;temperature;humidity | sensor_id;sensor_type;location;lat;lon;timestamp;temperature;humidity
     source:   20 dht22 and bme280 files of 2026-10-04, spread over the folder
 
-[note   ] temperature against the proposed -60 to 60
+[match  ] temperature against the proposed -60 to 60
+    expected: no reading outside
     found:    0 of 11485 readings outside; median 15.7, least 6.3, most 39.3
     source:   20 dht22 and bme280 files of 2026-10-04, spread over the folder
 
-[note   ] humidity against the proposed 0 to 100
+[match  ] humidity against the proposed 0 to 100
+    expected: no reading outside
     found:    0 of 11485 readings outside; median 85.3, least 1.0, most 100.0
     source:   20 dht22 and bme280 files of 2026-10-04, spread over the folder
 
