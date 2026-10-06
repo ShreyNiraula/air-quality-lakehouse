@@ -3,8 +3,11 @@ name = "airquality"
 version = "0.1.0"
 description = "Air-quality comparison platform"
 requires-python = ">=3.12"
+# Pinned as tested together in checks 0.2 and 0.3: change them together, and run both checks.
 dependencies = [
-    "duckdb>=1.5.6",
+    "dbt-core==1.12.5",
+    "dbt-duckdb==1.11.0",
+    "duckdb==1.5.6",
 ]
 
 [dependency-groups]

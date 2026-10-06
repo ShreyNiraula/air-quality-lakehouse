@@ -4,3 +4,6 @@
 __pycache__/
 .pytest_cache/
 .ruff_cache/
+# what dbt writes when it is run by hand inside dbt_check/
+dbt_check/logs/
+dbt_check/target/

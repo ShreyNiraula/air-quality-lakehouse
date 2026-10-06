@@ -1,0 +1,28 @@
+# How dbt reaches the lakehouse of `compose.yaml`: DuckDB in memory, with the Iceberg catalog
+# attached as `lake`. The key and password are the local store's made-up ones.
+dbt_check:
+  target: lake
+  outputs:
+    lake:
+      type: duckdb
+      path: ":memory:"
+      database: lake
+      schema: "{{ env_var('DBT_CHECK_SCHEMA', 'dbt_check') }}"
+      threads: 1
+      extensions: [httpfs, iceberg]
+      secrets:
+        - type: s3
+          key_id: lakeadmin
+          secret: lakepassword
+          endpoint: localhost:9000
+          url_style: path
+          use_ssl: false
+          region: us-east-1
+      attach:
+        - path: warehouse
+          alias: lake
+          type: iceberg
+          options:
+            endpoint: http://localhost:8181
+            authorization_type: none
+            access_delegation_mode: none

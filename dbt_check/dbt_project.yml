@@ -1,0 +1,9 @@
+# The smallest dbt project that answers task 0.3: can dbt build into the Iceberg catalog?
+# `make dbt-check` runs it. The real dbt project starts in task 1.2.
+name: dbt_check
+version: "1.0"
+profile: dbt_check
+model-paths: [models]
+seed-paths: [seeds]
+flags:
+  send_anonymous_usage_stats: false
