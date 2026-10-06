@@ -53,7 +53,7 @@ flowchart LR
 
 **Order of work:** 0.1, then 0.2, 0.4, 0.5, 0.5b and 0.6 side by side, then 0.3 and 0.7, then 0.8.
 
-- [ ] **Owner A: Get an OpenAQ API key.**
+- [x] **Owner A: Get an OpenAQ API key.**
   Register at explore.openaq.org. The key stays on your machine and is never committed.
 
 - [ ] **Owner B: Choose two cities.**
@@ -83,7 +83,7 @@ flowchart LR
 - [x] **0.6 Vocabulary check.** The standard names, the unit spellings and the WHO 15 µg/m³ value confirmed at their sources.
   Needs: 0.1. Done when: a short record with links is committed, and the vocabulary table in `plan.md` is corrected if anything differs.
 
-- [ ] **0.7 City candidates.** A script lists cities where a reference monitor has low-cost sensors within about 1 km, with data from both since January 2025. It also reports whether each monitor measures temperature or humidity.
+- [x] **0.7 City candidates.** A script lists cities where a reference monitor has low-cost sensors within about 1 km, with data from both since January 2025. It also reports whether each monitor measures temperature or humidity.
   Needs: 0.4, 0.5b, Owner A. Done when: the script prints a table of candidates for the owner to choose from.
 
 - [ ] **0.8 Source manifests.** For the chosen stations: ids, sensors and their parameters, unit text as found, timezone, licence and its permissions, gaps, and file hashes.
