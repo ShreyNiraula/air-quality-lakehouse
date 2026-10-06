@@ -4,9 +4,9 @@
 
 Reference monitors come from the OpenAQ API, which needs a key in the environment variable
 OPENAQ_API_KEY. Low-cost sensors are openSenseMap boxes. A pair counts only if both have reported
-PM2.5 since 1 January 2025 or earlier and within the last 30 days. For the cities with at least
-three pairs, each source's archive is then asked whether it holds PM2.5 readings of the monitor
-or the box on a few sample days. The key is never printed.
+PM2.5 since 1 January 2025 or earlier and within the last 30 days; for a box, the first means a
+PM2.5 file in the archive on the first sample day. For the cities with at least three pairs, each
+source's archive is then asked for PM2.5 readings on every sample day. The key is never printed.
 """
 
 import argparse
@@ -213,16 +213,18 @@ def main() -> int:
     for id in sorted({pair.monitor.id for pair in found}):
         try:
             sensors[id] = json.loads(fetch(f"{OPENAQ}/locations/{id}/sensors", key))["results"]
-        except urllib.error.HTTPError:  # OpenAQ answers for a few monitors with a server error
+        except (urllib.error.HTTPError, ValueError):  # OpenAQ: a server error, or no answer
             sensors[id] = None
     sure = {id for id, own in sensors.items() if own and pm25_throughout(own, now)}
     unread = [id for id, own in sensors.items() if own is None]
-    groups = cities([pair for pair in found if pair.monitor.id in sure])
     archived = folders(fetch(opensensemap.ARCHIVE + "/").decode())
     days = [d for d in SAMPLE_DAYS if d in archived and d <= (now - SETTLED).date()]
     listings = [
         BOX_FOLDER.findall(fetch(f"{opensensemap.ARCHIVE}/{day}/").decode()) for day in days
     ]
+    near = {pair.box for pair in found}  # the list gives a box's first day, not its sensor's
+    early = {box.id for box in near if sampled(box, days[:1], listings[:1])}
+    groups = cities([p for p in found if p.monitor.id in sure and p.box.id in early])
     places = {q for group in groups if len(group) >= RULE for p in group for q in p[:2]}
     present = {place.id: sampled(place, days, listings) for place in places}
     command = " ".join(["python -m airquality.checks.city_candidates", *sys.argv[1:]])
@@ -232,7 +234,10 @@ def main() -> int:
     print(f"earlier and in the last {RECENT.days} days. {len(sensors)} of the monitors have a box")
     print(f"within {args.radius} km, and {len(sure)} of those have a PM2.5 sensor that itself")
     print("reported throughout. Left out because OpenAQ gave no sensor list for them: monitors")
-    print(f"{', '.join(unread) or 'none'}. Sample days: {', '.join(map(str, days))}\n")
+    print(
+        f"{', '.join(unread) or 'none'}. {len(early)} of the {len(near)} boxes near a monitor have"
+    )
+    print(f"a PM2.5 file on the first sample day. Sample days: {', '.join(map(str, days))}\n")
     print("\n".join(report(groups, present, len(days))))
     return 0
 
