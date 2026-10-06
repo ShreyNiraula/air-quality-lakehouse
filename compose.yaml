@@ -12,7 +12,9 @@ services:
       RUSTFS_SECRET_KEY: lakepassword
     volumes: ["store:/data"]
 
-  bucket:  # creates the bucket the catalog writes to, then exits
+  # Creates the bucket the catalog writes to, then exits. It retries until the store answers,
+  # which is how the catalog below is kept from starting before the store is ready.
+  bucket:
     image: curlimages/curl:8.22.0
     depends_on: [store]
     command:
@@ -30,7 +32,9 @@ services:
       - PUT
       - http://store:9000/warehouse
 
-  catalog:  # the Iceberg REST catalog that Apache Iceberg publishes for testing
+  # The Iceberg REST catalog that Apache Iceberg publishes for testing. Its image carries a health
+  # check on its own HTTP endpoint, and `up --wait` returns only once that check passes.
+  catalog:
     image: apache/iceberg-rest-fixture:1.10.1
     depends_on:
       bucket: {condition: service_completed_successfully}

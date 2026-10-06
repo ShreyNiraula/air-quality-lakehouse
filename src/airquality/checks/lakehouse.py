@@ -83,7 +83,7 @@ def main() -> int:
         print(f"Could not attach the catalog at {CATALOG}: {error}")
         print("Is the stack up? `make lakehouse` starts it and runs this check.\nFAIL")
         return 1
-    table = f"run_{int(time.time())}"
+    table = f"run_{time.time_ns()}"  # never used before: a dropped table leaves its files behind
     try:
         findings = check(con, table)
     finally:  # leave the catalog as it was, so the check can run any number of times
