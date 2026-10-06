@@ -6,7 +6,7 @@
 services:
   store:  # RustFS, an S3-compatible object store
     image: rustfs/rustfs:1.0.1
-    ports: ["9000:9000"]
+    ports: ["127.0.0.1:9000:9000"]  # this machine only: the key below is public
     environment:
       RUSTFS_ACCESS_KEY: lakeadmin
       RUSTFS_SECRET_KEY: lakepassword
@@ -38,7 +38,7 @@ services:
     image: apache/iceberg-rest-fixture:1.10.1
     depends_on:
       bucket: {condition: service_completed_successfully}
-    ports: ["8181:8181"]
+    ports: ["127.0.0.1:8181:8181"]  # this machine only: the catalog has no login
     environment:
       AWS_ACCESS_KEY_ID: lakeadmin
       AWS_SECRET_ACCESS_KEY: lakepassword
