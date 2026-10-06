@@ -80,7 +80,7 @@ flowchart LR
 - [x] **0.5b openSenseMap check.** openSenseMap replaces Sensor.Community as the low-cost source, because task 0.5 found Sensor.Community's licence conditions unclear and the owner dropped it. The licence read from a primary source. The files of a box's PM2.5, temperature and humidity sensors, how box owners name their sensors, how far apart readings are, and how many days late a day's folder appears. The proposed valid ranges compared with real values.
   Needs: 0.1. Done when: a script prints the findings, and they are recorded with their sources. If the licence is missing or unclear, the decision comes to the owner.
 
-- [ ] **0.6 Vocabulary check.** The standard names, the unit spellings and the WHO 15 µg/m³ value confirmed at their sources.
+- [x] **0.6 Vocabulary check.** The standard names, the unit spellings and the WHO 15 µg/m³ value confirmed at their sources.
   Needs: 0.1. Done when: a short record with links is committed, and the vocabulary table in `plan.md` is corrected if anything differs.
 
 - [ ] **0.7 City candidates.** A script lists cities where a reference monitor has low-cost sensors within about 1 km, with data from both since January 2025. It also reports whether each monitor measures temperature or humidity.
