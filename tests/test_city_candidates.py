@@ -1,0 +1,111 @@
+"""The city candidates script, on made-up monitors and boxes shaped like the real ones."""
+
+from datetime import UTC, datetime
+
+from airquality.checks.city_candidates import (
+    Place,
+    boxes,
+    cities,
+    km,
+    label,
+    monitors,
+    pairs,
+    report,
+)
+
+NOW = datetime(2026, 10, 5, 12, tzinfo=UTC)
+PM25 = {"title": "PM2.5", "unit": "µg/m³"}
+
+
+def monitor(id=1, lat=52.5, lon=13.4, first="2020-01-01", last="2026-10-05", also=(), **more):
+    names = ["pm25", *also]
+    return {
+        "id": id,
+        "name": f"Station {id}",
+        "locality": "10115 berlin",
+        "country": {"code": "DE"},
+        "coordinates": {"latitude": lat, "longitude": lon},
+        "datetimeFirst": {"utc": f"{first}T00:00:00Z"},
+        "datetimeLast": {"utc": f"{last}T00:00:00Z"},
+        "sensors": [{"parameter": {"name": name}} for name in names],
+    } | more
+
+
+def box(id="a", lat=52.5, lon=13.4, created="2024-06-01", last="2026-10-05", **more):
+    return {
+        "_id": id * 24,
+        "name": f"Box {id}",
+        "exposure": "outdoor",
+        "createdAt": f"{created}T00:00:00.000Z",
+        "lastMeasurementAt": f"{last}T00:00:00.000Z",
+        "currentLocation": {"coordinates": [lon, lat]},  # openSenseMap puts longitude first
+        "sensors": [PM25],
+    } | more
+
+
+def test_distance_is_in_kilometres():
+    assert round(km(Place("a", "", 52.5, 13.4), Place("b", "", 52.509, 13.4)), 2) == 1.00
+
+
+def test_a_monitor_counts_only_if_it_reported_before_2025_and_recently():
+    listed = [
+        monitor(1, also=["temperature", "relativehumidity"]),
+        monitor(2, first="2025-01-01"),  # started on the first day, not before it
+        monitor(3, last="2026-09-01"),  # stopped more than 30 days ago
+        monitor(4, datetimeLast=None),
+        monitor(5, coordinates={"latitude": None, "longitude": None}),
+        monitor(6, locality="None"),  # OpenAQ writes the word for some places
+    ]
+    kept = monitors(listed, NOW)
+    assert [place.id for place in kept] == ["1", "6"]
+    assert (kept[0].city, kept[0].also) == ("Berlin, DE", "relativehumidity and temperature")
+    assert (kept[1].city, kept[1].also) == ("Station 6, DE", "neither")
+
+
+def test_a_box_counts_only_if_it_is_outdoor_measures_pm25_and_reported_throughout():
+    listed = [
+        box("a"),
+        box("b", exposure="indoor"),
+        box("c", sensors=[{"title": "PM10", "unit": "µg/m³"}]),
+        box("d", created="2025-03-01"),
+        box("e", last="2026-08-01"),
+        box("f", currentLocation=None),
+        box("0", lastMeasurementAt=None),
+    ]
+    kept = boxes(listed, NOW)
+    assert [(place.id, place.lat, place.lon) for place in kept] == [("a" * 24, 52.5, 13.4)]
+
+
+def test_pairs_are_within_the_radius_and_grouped_into_cities():
+    reference = monitors([monitor(1), monitor(2, lat=52.55), monitor(3, lat=48.1, lon=11.6)], NOW)
+    low_cost = boxes(
+        [
+            box("a", lat=52.504),  # 0.44 km from monitor 1
+            box("b", lat=52.5, lon=13.41),  # 0.68 km from monitor 1
+            box("c", lat=52.52),  # 2.2 km from monitor 1: too far
+            box("d", lat=52.551),  # 0.11 km from monitor 2, which is 5.6 km from monitor 1
+            box("e", lat=48.1, lon=11.6),  # at monitor 3, in another city
+        ],
+        NOW,
+    )
+    found = pairs(reference, low_cost, 1.0)
+    assert sorted((p.monitor.id, p.box.id[0], round(p.km, 2)) for p in found) == [
+        ("1", "a", 0.44),
+        ("1", "b", 0.68),
+        ("2", "d", 0.11),
+        ("3", "e", 0.0),
+    ]
+    assert len(pairs(reference, low_cost, 2.5)) == 5
+    groups = cities(found)
+    assert [(label(group), len(group)) for group in groups] == [
+        ("Berlin, DE", 3),
+        ("Berlin, DE", 1),
+    ]
+    lines = report(groups, {"1": 6, "a" * 24: 7}, 8)
+    assert lines[1].split() == ["3", "3", "2", "neither", "Berlin,", "DE"]
+    assert lines[3:5] == ["", "Berlin, DE: 3 pairs"]  # the city with one pair gets no detail
+    assert lines[5:7] == [
+        "  0.44 km  monitor 1 Station 1: a file on 6 of 8 sample days; also measures neither",
+        "           box " + "a" * 24 + " Box a: a file on 7 of 8 sample days",
+    ]
+    assert len(lines) == 11
