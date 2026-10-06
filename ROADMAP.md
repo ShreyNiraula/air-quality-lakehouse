@@ -77,7 +77,7 @@ flowchart LR
 - [x] **0.5 Sensor.Community check.** The licence read from a primary source. The columns of a dust file and of a temperature and humidity file, how the two join, how far apart readings are, and how many days late files arrive. The proposed valid ranges compared with real values.
   Needs: 0.1. Done when: the findings are recorded with their sources. If the licence is missing or unclear, the decision comes to the owner.
 
-- [ ] **0.5b openSenseMap check.** openSenseMap replaces Sensor.Community as the low-cost source, because task 0.5 found Sensor.Community's licence conditions unclear and the owner dropped it. The licence read from a primary source. The files of a box's PM2.5, temperature and humidity sensors, how box owners name their sensors, how far apart readings are, and how many days late a day's folder appears. The proposed valid ranges compared with real values.
+- [x] **0.5b openSenseMap check.** openSenseMap replaces Sensor.Community as the low-cost source, because task 0.5 found Sensor.Community's licence conditions unclear and the owner dropped it. The licence read from a primary source. The files of a box's PM2.5, temperature and humidity sensors, how box owners name their sensors, how far apart readings are, and how many days late a day's folder appears. The proposed valid ranges compared with real values.
   Needs: 0.1. Done when: a script prints the findings, and they are recorded with their sources. If the licence is missing or unclear, the decision comes to the owner.
 
 - [ ] **0.6 Vocabulary check.** The standard names, the unit spellings and the WHO 15 µg/m³ value confirmed at their sources.
