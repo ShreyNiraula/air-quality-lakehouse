@@ -85,29 +85,20 @@ def test_a_box_counts_only_if_it_is_outdoor_and_its_pm25_sensor_reported_through
 
 def test_pairs_are_within_the_radius_and_grouped_into_cities():
     reference = monitors([monitor(1), monitor(2, lat=52.55), monitor(3, lat=48.1, lon=11.6)], NOW)
-    low_cost = boxes(
-        [
-            box("a", lat=52.504),  # 0.44 km from monitor 1
-            box("b", lat=52.5, lon=13.41),  # 0.68 km from monitor 1
-            box("c", lat=52.52),  # 2.2 km from monitor 1: too far
-            box("d", lat=52.551),  # 0.11 km from monitor 2, which is 5.6 km from monitor 1
-            box("e", lat=48.1, lon=11.6),  # at monitor 3, in another city
-        ],
-        NOW,
-    )
-    found = pairs(reference, low_cost, 1.0)
-    assert sorted((p.monitor.id, p.box.id[0], round(p.km, 2)) for p in found) == [
-        ("1", "a", 0.44),
-        ("1", "b", 0.68),
-        ("2", "d", 0.11),
-        ("3", "e", 0.0),
+    listed = [
+        box("a", lat=52.504),  # 0.44 km from monitor 1
+        box("b", lat=52.5, lon=13.41),  # 0.68 km from monitor 1
+        box("c", lat=52.52),  # 2.2 km from monitor 1: too far
+        box("d", lat=52.551),  # 0.11 km from monitor 2, which is 5.6 km from monitor 1
+        box("e", lat=48.1, lon=11.6),  # at monitor 3, in another city
     ]
+    low_cost = boxes(listed, NOW)
+    found = pairs(reference, low_cost, 1.0)
+    near = sorted((p.monitor.id, p.box.id[0], round(p.km, 2)) for p in found)
+    assert near == [("1", "a", 0.44), ("1", "b", 0.68), ("2", "d", 0.11), ("3", "e", 0.0)]
     assert len(pairs(reference, low_cost, 2.5)) == 5
     groups = cities(found)
-    assert [(label(group), len(group)) for group in groups] == [
-        ("Berlin, DE", 3),
-        ("Berlin, DE", 1),
-    ]
+    assert [(label(g), len(g)) for g in groups] == [("Berlin, DE", 3), ("Berlin, DE", 1)]
     lines = city_candidates.report(groups, {"1": 6, "a" * 24: 7}, 8)
     assert lines[1].split() == ["3", "3", "2", "neither", "Berlin,", "DE"]
     assert lines[3:5] == ["", "Berlin, DE: 3 pairs"]  # the city with one pair gets no detail
