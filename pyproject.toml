@@ -3,7 +3,9 @@ name = "airquality"
 version = "0.1.0"
 description = "Air-quality comparison platform"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "duckdb>=1.5.6",
+]
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.16"]

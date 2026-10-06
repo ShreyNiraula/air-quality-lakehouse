@@ -1,0 +1,65 @@
+# The local lakehouse: an object store and an Iceberg REST catalog.
+#   docker compose up -d --wait     start both; safe to run again
+#   docker compose down             stop them and keep the data
+#   docker compose down -v          stop them and delete the data
+# Compose puts every service of this file on one private network of its own, where each is
+# reached by its service name. That is how the catalog finds the store at http://rustfs-store:9000.
+#
+# The key and password below are made up for this local store. They are not secrets: the store
+# runs only on this machine, is reachable only from it, and holds public data. A real key or token
+# never goes in this file.
+services:
+  # RustFS, an S3-compatible object store. The name has a hyphen, not an underscore, because it is
+  # also the store's address on the network, and the catalog rejects an address with an underscore.
+  rustfs-store:
+    image: rustfs/rustfs:1.0.1
+    ports: ["127.0.0.1:9000:9000"]  # this machine only: the key below is public
+    environment:
+      RUSTFS_ACCESS_KEY: lakeadmin
+      RUSTFS_SECRET_KEY: lakepassword
+    volumes: ["store:/data"]
+
+  # A new store is empty. The catalog writes every table into a bucket named `warehouse` and does
+  # not create it, so this one-off step creates it: one signed request to the store, and it exits.
+  # It retries until the store answers, which also keeps the catalog below from starting before
+  # the store is ready. On a later start the bucket exists and the step changes nothing.
+  bucket:
+    image: curlimages/curl:8.22.0
+    depends_on: [rustfs-store]
+    command:
+      - --fail
+      - --retry
+      - "20"
+      - --retry-all-errors
+      - --retry-delay
+      - "1"
+      - --aws-sigv4
+      - aws:amz:us-east-1:s3
+      - --user
+      - lakeadmin:lakepassword
+      - --request
+      - PUT
+      - http://rustfs-store:9000/warehouse
+
+  # The Iceberg REST catalog that Apache Iceberg publishes for testing. Its image carries a health
+  # check on its own HTTP endpoint, and `up --wait` returns only once that check passes.
+  catalog:
+    image: apache/iceberg-rest-fixture:1.10.1
+    depends_on:
+      bucket: {condition: service_completed_successfully}
+    ports: ["127.0.0.1:8181:8181"]  # this machine only: the catalog has no login
+    environment:
+      AWS_ACCESS_KEY_ID: lakeadmin  # the store's key and password, as set above
+      AWS_SECRET_ACCESS_KEY: lakepassword
+      AWS_REGION: us-east-1  # the S3 client needs a region to be named
+      CATALOG_WAREHOUSE: s3://warehouse/  # the bucket where table files go
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO  # read and write files over S3
+      CATALOG_S3_ENDPOINT: http://rustfs-store:9000  # this store, not Amazon's
+      CATALOG_S3_PATH__STYLE__ACCESS: "true"  # address it as host/bucket, not bucket.host
+      # Without this the catalog keeps its list of tables in memory and forgets it on a restart.
+      CATALOG_URI: jdbc:sqlite:/home/iceberg/catalog.db
+    volumes: ["catalog:/home/iceberg"]
+
+volumes:
+  store:
+  catalog:

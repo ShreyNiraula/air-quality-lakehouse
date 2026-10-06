@@ -18,7 +18,10 @@ jobs:
       - uses: astral-sh/setup-uv@v10.2.0  # this action publishes no moving major tag
       - run: uv sync --locked
       - run: make lint
+      - run: docker compose up -d --wait  # the lakehouse test needs the store and the catalog
       - run: make test
+        env:
+          LAKEHOUSE_REQUIRED: "1"  # here the lakehouse test must run, not be skipped
       - name: Report the pull request size
         if: github.event_name == 'pull_request'
         # Exit code 1 means over the limit, which is reported and left to the reviewer.
