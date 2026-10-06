@@ -61,7 +61,7 @@ All five are answered for at least two cities, so the output is a comparison.
    The vocabulary and registry are dbt seeds and the catalog is a tested dbt model, so the layer is published through the same gate as the data. It is modelled on public standards: OGC SensorThings for stations, sensors and observations, CF names and UCUM units for the vocabulary, and DCAT for the entry per source.
 4. **A common model in dbt.** All readings go into one long table with one row per station, parameter and hour. Units, time zones and quality flags are made consistent. Models go from raw, to hourly, to daily, to the comparison tables, with tests and enforced contracts at each step, and a station table that keeps history.
 5. **A publish gate.** Models are built and tested in a staging area. Only a fully passing build is promoted to the published tables, and each promotion is one Iceberg snapshot, so any earlier release can still be queried or restored.
-6. **A lakehouse.** Iceberg tables on MinIO through a REST catalog, queried with DuckDB. It includes demos of time travel and schema change, and a measured benchmark of file compaction.
+6. **A lakehouse.** Iceberg tables on RustFS, an S3-compatible object store, through a REST catalog, queried with DuckDB. It includes demos of time travel and schema change, and a measured benchmark of file compaction.
 7. **A dashboard.** A station map, exceedance days by month and year, sensor-versus-monitor disagreement against humidity and temperature, data health, and what data exists for each parameter.
 8. **An agent module.** An MCP server exposes five read-only, typed tools over the published tables, with row limits and an audit log. Each tool takes the parameter as an argument:
    - **find** what data exists for a parameter, place and period;
@@ -99,7 +99,7 @@ Each stage ends with something that runs and can be shown.
 - **Agent test table:** pass counts, including the hostile case.
 
 ## Tech
-Python, Airflow, dbt, DuckDB, Iceberg, MinIO, Ollama, MCP, Terraform, LocalStack.
+Python, Airflow, dbt, DuckDB, Iceberg, RustFS, Ollama, MCP, Terraform, LocalStack.
 
 ## Honest limits
 - Results are per station, not per neighborhood.
@@ -250,7 +250,7 @@ These hold for every parameter. Values that differ by parameter come from the vo
 - The archive lag measured per source, and one station backfilled for one month end to end before the whole period is loaded.
 - Vocabulary: the PM2.5 and relative-humidity entries read on the CF standard-name table itself; the UCUM spellings `ug/m3`, `Cel` and `%` checked against the UCUM specification; the proposed valid ranges for temperature and humidity compared with real files.
 - The WHO 2021 guideline document opened and the 15 µg/m³ 24-hour value confirmed by eye.
-- DuckDB creates an Iceberg table through the REST catalog on MinIO, inserts, and reads an earlier snapshot. **If it fails:** write with PyIceberg and read with DuckDB.
+- DuckDB creates an Iceberg table through the REST catalog on RustFS, inserts, and reads an earlier snapshot. RustFS replaced MinIO on 2026-10-06: MinIO's project is archived and its official image is gone. **If it fails:** write with PyIceberg and read with DuckDB.
 - dbt-duckdb and DuckDB versions pinned as tested. The local model returns valid tool arguments in at least 8 of 10 trial calls.
 - For the Terraform step: a LocalStack account and token on a personal machine, and the Docker socket mounted for Lambda.
 

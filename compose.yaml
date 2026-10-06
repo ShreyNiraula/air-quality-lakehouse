@@ -1,0 +1,52 @@
+# The local lakehouse: an object store and an Iceberg REST catalog.
+#   docker compose up -d --wait     start both; safe to run again
+#   docker compose down             stop them and keep the data
+#   docker compose down -v          stop them and delete the data
+# The key and password below are for this local store only. They protect nothing.
+services:
+  store:  # RustFS, an S3-compatible object store
+    image: rustfs/rustfs:1.0.1
+    ports: ["9000:9000"]
+    environment:
+      RUSTFS_ACCESS_KEY: lakeadmin
+      RUSTFS_SECRET_KEY: lakepassword
+    volumes: ["store:/data"]
+
+  bucket:  # creates the bucket the catalog writes to, then exits
+    image: curlimages/curl:8.22.0
+    depends_on: [store]
+    command:
+      - --fail
+      - --retry
+      - "20"
+      - --retry-all-errors
+      - --retry-delay
+      - "1"
+      - --aws-sigv4
+      - aws:amz:us-east-1:s3
+      - --user
+      - lakeadmin:lakepassword
+      - --request
+      - PUT
+      - http://store:9000/warehouse
+
+  catalog:  # the Iceberg REST catalog that Apache Iceberg publishes for testing
+    image: apache/iceberg-rest-fixture:1.10.1
+    depends_on:
+      bucket: {condition: service_completed_successfully}
+    ports: ["8181:8181"]
+    environment:
+      AWS_ACCESS_KEY_ID: lakeadmin
+      AWS_SECRET_ACCESS_KEY: lakepassword
+      AWS_REGION: us-east-1
+      CATALOG_WAREHOUSE: s3://warehouse/
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
+      CATALOG_S3_ENDPOINT: http://store:9000
+      CATALOG_S3_PATH__STYLE__ACCESS: "true"
+      # Without this the catalog keeps its list of tables in memory and forgets it on a restart.
+      CATALOG_URI: jdbc:sqlite:/home/iceberg/catalog.db
+    volumes: ["catalog:/home/iceberg"]
+
+volumes:
+  store:
+  catalog:

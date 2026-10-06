@@ -59,13 +59,13 @@ flowchart LR
 - [ ] **Owner B: Choose two cities.**
   Needs: 0.7. Pick from the table that task 0.7 produces.
 
-- [ ] **Owner F: Install Docker Desktop.**
-  Download it from docker.com and start it once. Task 0.2 uses it to run MinIO and the Iceberg catalog. This machine has no way to run containers yet.
+- [x] **Owner F: Install Docker Desktop.**
+  Download it from docker.com and start it once. Task 0.2 uses it to run the object store and the Iceberg catalog.
 
 - [x] **0.1 Project skeleton.** Package layout, linter, one test, hooks that run the linter before each commit and the tests before each push, and CI that runs both and reports the pull request size. Kept tiny on purpose: it is the trial run of the review loop.
   Needs: nothing. Done when: the tests pass locally with one command, a commit with a lint error is refused, and CI is green on the pull request.
 
-- [ ] **0.2 Lakehouse check.** MinIO and an Iceberg catalog start with one command. DuckDB creates an Iceberg table, inserts rows, and reads an earlier snapshot.
+- [x] **0.2 Lakehouse check.** RustFS, an object store, and an Iceberg catalog start with one command. DuckDB creates an Iceberg table, inserts rows, and reads an earlier snapshot.
   Needs: 0.1, Owner F. Done when: one command prints pass, or the fallback (write with PyIceberg, read with DuckDB) is shown working.
 
 - [ ] **0.3 dbt check.** dbt builds one model into that Iceberg catalog. The dbt and DuckDB versions are pinned as tested.

@@ -10,4 +10,8 @@ test:  ## what the pre-push hook runs
 
 check: lint test
 
-.PHONY: setup lint test check
+lakehouse:  ## start the object store and the Iceberg catalog, then run the lakehouse check
+	docker compose up -d --wait
+	uv run python -m airquality.checks.lakehouse
+
+.PHONY: setup lint test check lakehouse
