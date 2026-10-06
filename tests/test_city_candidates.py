@@ -2,23 +2,14 @@
 
 from datetime import UTC, datetime
 
-from airquality.checks.city_candidates import (
-    Place,
-    boxes,
-    cities,
-    km,
-    label,
-    monitors,
-    pairs,
-    report,
-)
+from airquality.checks import city_candidates
+from airquality.checks.city_candidates import boxes, cities, label, monitors, pairs
 
 NOW = datetime(2026, 10, 5, 12, tzinfo=UTC)
-PM25 = {"title": "PM2.5", "unit": "µg/m³"}
+FRESH = {"lastMeasurement": {"createdAt": "2026-10-05T00:00:00.000Z"}}
 
 
 def monitor(id=1, lat=52.5, lon=13.4, first="2020-01-01", last="2026-10-05", also=(), **more):
-    names = ["pm25", *also]
     return {
         "id": id,
         "name": f"Station {id}",
@@ -27,53 +18,69 @@ def monitor(id=1, lat=52.5, lon=13.4, first="2020-01-01", last="2026-10-05", als
         "coordinates": {"latitude": lat, "longitude": lon},
         "datetimeFirst": {"utc": f"{first}T00:00:00Z"},
         "datetimeLast": {"utc": f"{last}T00:00:00Z"},
-        "sensors": [{"parameter": {"name": name}} for name in names],
+        "sensors": [{"parameter": {"name": name}} for name in ["pm25", *also]],
     } | more
 
 
 def box(id="a", lat=52.5, lon=13.4, created="2024-06-01", last="2026-10-05", **more):
+    dust = {"lastMeasurement": {"createdAt": f"{last}T00:00:00.000Z"}}
     return {
         "_id": id * 24,
         "name": f"Box {id}",
         "exposure": "outdoor",
         "createdAt": f"{created}T00:00:00.000Z",
-        "lastMeasurementAt": f"{last}T00:00:00.000Z",
         "currentLocation": {"coordinates": [lon, lat]},  # openSenseMap puts longitude first
-        "sensors": [PM25],
+        "sensors": [
+            {"_id": f"{id}-pm25", "title": "PM2.5", "unit": "µg/m³"} | dust,
+            {"_id": f"{id}-temp", "title": "Temperatur", "unit": "°C"} | FRESH,
+        ],
     } | more
 
 
-def test_distance_is_in_kilometres():
-    assert round(km(Place("a", "", 52.5, 13.4), Place("b", "", 52.509, 13.4)), 2) == 1.00
-
-
-def test_a_monitor_counts_only_if_it_reported_before_2025_and_recently():
+def test_a_monitor_counts_only_if_it_started_by_2025_and_reported_recently():
     listed = [
         monitor(1, also=["temperature", "relativehumidity"]),
-        monitor(2, first="2025-01-01"),  # started on the first day, not before it
-        monitor(3, last="2026-09-01"),  # stopped more than 30 days ago
-        monitor(4, datetimeLast=None),
-        monitor(5, coordinates={"latitude": None, "longitude": None}),
-        monitor(6, locality="None"),  # OpenAQ writes the word for some places
+        monitor(2, first="2025-01-01"),  # started on the first day of the period
+        monitor(3, first="2025-01-02"),
+        monitor(4, last="2026-09-01"),  # stopped more than 30 days ago
+        monitor(5, datetimeLast=None),
+        monitor(6, coordinates={"latitude": None, "longitude": None}),
+        monitor(7, locality="None"),  # OpenAQ writes the word for some places
     ]
     kept = monitors(listed, NOW)
-    assert [place.id for place in kept] == ["1", "6"]
+    assert [place.id for place in kept] == ["1", "2", "7"]
     assert (kept[0].city, kept[0].also) == ("Berlin, DE", "relativehumidity and temperature")
-    assert (kept[1].city, kept[1].also) == ("Station 6, DE", "neither")
+    assert (kept[2].city, kept[2].also) == ("Station 7, DE", "neither")
 
 
-def test_a_box_counts_only_if_it_is_outdoor_measures_pm25_and_reported_throughout():
+def test_a_monitor_is_kept_only_if_its_pm25_sensor_itself_reported_throughout():
+    def sensor(name, first="2020-01-01", last="2026-10-05"):
+        return monitor(first=first, last=last) | {"parameter": {"name": name}}
+
+    kept = city_candidates.pm25_throughout
+    assert kept([sensor("no2"), sensor("pm25")], NOW)
+    assert not kept([sensor("no2"), sensor("pm25", first="2025-06-01")], NOW)  # added later
+    assert not kept([sensor("no2"), sensor("pm25", last="2026-08-01")], NOW)  # stopped
+    assert not kept([sensor("no2")], NOW)
+
+
+def test_a_box_counts_only_if_it_is_outdoor_and_its_pm25_sensor_reported_throughout():
     listed = [
         box("a"),
         box("b", exposure="indoor"),
-        box("c", sensors=[{"title": "PM10", "unit": "µg/m³"}]),
-        box("d", created="2025-03-01"),
-        box("e", last="2026-08-01"),
-        box("f", currentLocation=None),
-        box("0", lastMeasurementAt=None),
+        box("c", sensors=[{"_id": "c-pm10", "title": "PM10", "unit": "µg/m³"} | FRESH]),
+        box("d", created="2025-01-01"),  # made on the first day of the period
+        box("e", created="2025-01-02"),
+        box("f", last="2026-08-01"),  # its temperature sensor still reports, its PM2.5 does not
+        box("0", currentLocation=None),
+        box("1", sensors=[{"_id": "1-pm25", "title": "PM2.5", "unit": "µg/m³"}]),  # never read
     ]
     kept = boxes(listed, NOW)
-    assert [(place.id, place.lat, place.lon) for place in kept] == [("a" * 24, 52.5, 13.4)]
+    assert [(place.id[0], place.lat, place.lon) for place in kept] == [
+        ("a", 52.5, 13.4),
+        ("d", 52.5, 13.4),
+    ]
+    assert kept[0].pm25 == ("a-pm25",)
 
 
 def test_pairs_are_within_the_radius_and_grouped_into_cities():
@@ -101,11 +108,11 @@ def test_pairs_are_within_the_radius_and_grouped_into_cities():
         ("Berlin, DE", 3),
         ("Berlin, DE", 1),
     ]
-    lines = report(groups, {"1": 6, "a" * 24: 7}, 8)
+    lines = city_candidates.report(groups, {"1": 6, "a" * 24: 7}, 8)
     assert lines[1].split() == ["3", "3", "2", "neither", "Berlin,", "DE"]
     assert lines[3:5] == ["", "Berlin, DE: 3 pairs"]  # the city with one pair gets no detail
     assert lines[5:7] == [
-        "  0.44 km  monitor 1 Station 1: a file on 6 of 8 sample days; also measures neither",
-        "           box " + "a" * 24 + " Box a: a file on 7 of 8 sample days",
+        "  0.44 km  monitor 1 Station 1: PM2.5 on 6 of 8 sample days; also measures neither",
+        "           box " + "a" * 24 + " Box a: PM2.5 on 7 of 8 sample days",
     ]
     assert len(lines) == 11
