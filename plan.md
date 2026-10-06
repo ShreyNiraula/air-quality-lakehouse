@@ -42,7 +42,7 @@ AQI is not a parameter. It is an index computed from several pollutants with a d
 All five are answered for at least two cities, so the output is a comparison.
 
 ## How the data flows
-1. **Land:** files arrive from the OpenAQ archive, the Sensor.Community archive and the Open-Meteo API.
+1. **Land:** files arrive from the OpenAQ archive, the openSenseMap archive and the Open-Meteo API.
 2. **Ingest:** each file is checked against its source's contract, stored as validated or quarantined with a reason, and a pointer records which version of that file is current.
 3. **Model:** dbt builds raw, then hourly, then daily, then comparison tables, with tests and contracts at each step.
 4. **Gate:** the models are built in a staging area, and only a fully passing build is promoted.
@@ -50,7 +50,7 @@ All five are answered for at least two cities, so the output is a comparison.
 6. **Serve:** DuckDB feeds the dashboard and the agent's read-only tools.
 
 ## What I build
-1. **A connector framework.** Each source is a plug-in: a short YAML contract (fields, units, time convention, licence, duplicate key, and which of its fields map to which parameter) plus a small adapter. Starting sources are the OpenAQ archive (reference monitors) and the Sensor.Community archive (low-cost sensors, including their own temperature and humidity readings).
+1. **A connector framework.** Each source is a plug-in: a short YAML contract (fields, units, time convention, licence, duplicate key, and which of its fields map to which parameter) plus a small adapter. Starting sources are the OpenAQ archive (reference monitors) and the openSenseMap archive (low-cost sensors, including their own temperature and humidity readings).
 2. **Ingestion, run by Airflow.** It loads history from 1 January 2025 and adds new days on each run. It can be re-run and backfilled safely. It records which version of each delivered file is current, and quarantines broken files with a reason.
 3. **A metadata layer.** This is what lets the platform answer for any parameter and say what data exists:
    - a parameter vocabulary: for each parameter its standard name, unit, valid range, how readings are averaged, and what each source calls it;
@@ -87,7 +87,7 @@ All five are answered for at least two cities, so the output is a comparison.
 Each stage ends with something that runs and can be shown.
 
 1. **One source and one city, end to end, for PM2.5.** Ingest history from January 2025, model, gate, publish to Iceberg, answer question 1. The vocabulary and the long table are in place from the start, with PM2.5 as the only parameter.
-2. **The low-cost source and a second city.** Sensor.Community is added with its temperature and humidity readings. Questions 2, 4 and 5, and the dashboard.
+2. **The low-cost source and a second city.** openSenseMap is added with its temperature and humidity readings. Questions 2, 4 and 5, and the dashboard.
 3. **A third source onboarded from scratch.** Default: Open-Meteo, for CAMS model PM2.5 and for weather. Answer question 3. Record the time taken, lines of adapter code and lines of config.
 4. **The agent module and its tests.**
 5. **Lakehouse demos, the compaction benchmark, and the Terraform deployment.**
@@ -122,7 +122,7 @@ Things only I can do:
 - Create a LocalStack account (free tier, non-commercial) for the Terraform step.
 
 Things the new chat does first:
-- Run the checks listed in Part 2. The ones most likely to change the design are: Sensor.Community's data licence, which is not confirmed; whether dbt can write Iceberg tables through DuckDB, which has a fallback; and the standard names and units that go into the vocabulary.
+- Run the checks listed in Part 2. The ones most likely to change the design are: the low-cost source's data licence (Sensor.Community's was unclear, so openSenseMap replaced it on 2026-10-05); whether dbt can write Iceberg tables through DuckDB, which has a fallback; and the standard names and units that go into the vocabulary.
 - Then create the repository in this folder and build stage 1.
 
 ## Still to decide
@@ -185,7 +185,7 @@ These hold for every parameter. Values that differ by parameter come from the vo
   FeatureOfInterest is not modelled: the feature is always the air at the station.
 - **Availability catalog:** a dbt model with one row per datastream: first and last valid hour, share of valid hours in the period, hours since the last observation, and counts of invalid hours by reason. It is derived from the observation table in the same build and promoted in the same snapshot, so it cannot disagree with the published data.
 - **Entry per source:** a DCAT-style file generated from the source contract (title, publisher, licence, time range, area, update frequency, download location). It is generated, never edited by hand.
-- **Sensors at one site:** Sensor.Community publishes temperature and humidity under a different sensor id from the PM sensor in the same box. The registry joins them by the archive's location id.
+- **Sensors at one site:** openSenseMap publishes a box as one folder with one file per sensor, so PM2.5, temperature and humidity each have their own sensor id. The registry joins them by the box id. A sensor's name is typed in by the box's owner, so the registry records which sensor id is which parameter.
 - **Wording:** the README says "modelled on" these standards. The platform serves no SensorThings API and makes no conformance claim.
 
 **Comparison rules**
@@ -200,7 +200,7 @@ These hold for every parameter. Values that differ by parameter come from the vo
 - A quarantined version never moves the pointer. Readers use only versions the pointer names, so an object written just before a failed pointer update is unreferenced and harmless.
 - **File validation is structural only:** the file opens, the header matches the source's contract, there is at least one row, keys and dates match the file's key, and units pass the unit rule. It has no value-range check and no minimum row count: an out-of-range reading or a short day is legitimate input that the models must count, not reject.
 - Storage and pointer sit behind two small interfaces, so the same function runs locally (directory and SQLite) and on AWS (S3 and DynamoDB).
-- **Backfill:** history from 2025-01-01 is loaded by the same `ingest` function, one file at a time, throttled, and resumable: a file version already validated is skipped by its content hash. The Sensor.Community adapter builds two URL forms, because days up to 2025 sit under year folders and 2026 days sit at the top level.
+- **Backfill:** history from 2025-01-01 is loaded by the same `ingest` function, one file at a time, throttled, and resumable: a file version already validated is skipped by its content hash. The openSenseMap adapter builds one URL form: every day is a folder at the top level of the archive.
 - **Source manifest** (committed): source and location ids, sensor ids and their parameters, each unit string exactly as found, provider, timezone, licence and its permissions (redistribution, attribution, commercial use, modification, share-alike), observed spacing between rows, first and last timestamps, dates with no file, file hashes. The history itself is not committed: the repo ships the download script and hashes. A small fixed window of real files is committed as test fixtures only if the licence allows redistribution.
 
 **Publish gate**
@@ -245,7 +245,7 @@ These hold for every parameter. Values that differ by parameter come from the vo
 - Two cities chosen that pass the pairing rule, with the monitor and the paired sensors reporting since January 2025. If none passes, the low-cost comparison is dropped for that city, not weakened.
 - Source manifests filled in. A source or station whose licence is missing or unclear is dropped.
 - On real files, for each parameter: the header, the exact unit string and the hour convention match what the contract says. If they differ, fix the contract and validator, not the metric rules.
-- Sensor.Community: the licence read from a primary source; the columns of a PM sensor file and of a temperature and humidity sensor file read from real files, including the location id that joins the two; the spacing between readings measured.
+- openSenseMap: the licence read from a primary source; the files of a PM sensor and of a temperature and humidity sensor read from real boxes, including the box id that joins them and how box owners name their sensors; the spacing between readings measured.
 - Whether the chosen OpenAQ stations report temperature or humidity.
 - The archive lag measured per source, and one station backfilled for one month end to end before the whole period is loaded.
 - Vocabulary: the PM2.5 and relative-humidity entries read on the CF standard-name table itself; the UCUM spellings `ug/m3`, `Cel` and `%` checked against the UCUM specification; the proposed valid ranges for temperature and humidity compared with real files.
@@ -283,8 +283,10 @@ Checked on 2026-10-03 unless a row gives a later date. Anything marked unverifie
 | WHO 2021 24-hour PM2.5 guideline 15 µg/m³, defined on the 99th percentile (3-4 exceedance days a year) | **Corroborated; the WHO table itself was not read.** The guideline PDF on iris.who.int and two other IRIS URLs returned HTTP 403. Two WHO pages show the table as an image; their text does confirm "99th percentile (i.e. 3-4 exceedance days per year)". A WHO compendium PDF downloaded but could not be rendered here. A search restricted to who.int returned 15 µg/m³ for the 24-hour level. The value is not in real doubt; the 2-minute manual check stays in the checks above. |
 | Ollama supports tool calling (docs examples use qwen3) and JSON-schema output through `format` | Confirmed (docs.ollama.com). The qwen3 library page shows a "tools" tag and sizes from 0.6b to 235b (4b is 2.5 GB, 8b 5.2 GB, 14b 9.3 GB). Its licence was not shown: unverified; check it before publishing agent results. |
 | DuckDB and Iceberg: tables read directly from a path are read-only; writing needs an attached Iceberg REST catalog | Confirmed (duckdb.org Iceberg extension overview). Write support arrived in DuckDB 1.4.0 according to a search summary of DuckDB's release announcement; the announcement itself was not opened. Current versions on PyPI: DuckDB 1.5.6, dbt-duckdb 1.11.0. Whether dbt-duckdb can target an attached Iceberg catalog: unverified -> checks above. |
-| Sensor.Community archive: daily folders from 2015 to today plus monthly CSV files, openly downloadable | Confirmed (archive.sensor.community directory listing). Layout checked 2026-10-04: days from 2015 to 2025 sit under year folders, 2026 days at the top level; one file per sensor per day, named like `2026-09-01_bme280_sensor_141.csv`, so temperature and humidity come from a different sensor id than PM. File columns were not read -> checks above. |
-| Sensor.Community data licence | **Unverified.** The archive listing states none and sensor.community returned HTTP 403 on 2026-10-04. Third-party pages (the ClickHouse sample-dataset docs) say Database Contents License; that is not a primary source -> checks above. |
+| Sensor.Community archive: daily folders from 2015 to today plus monthly CSV files, openly downloadable | Confirmed (archive.sensor.community directory listing). Layout checked 2026-10-04: days from 2015 to 2025 sit under year folders, 2026 days at the top level; one file per sensor per day, named like `2026-09-01_bme280_sensor_141.csv`, so temperature and humidity come from a different sensor id than PM. **Dropped as a source on 2026-10-05** because of its licence, in the next row. |
+| Sensor.Community data licence | **Unclear, so the source was dropped.** Read 2026-10-05 in task 0.5: the footer of sensor.community names the Database Contents License (DbCL) v1.0, and its clause 2.2 says "You must comply with the ODbL". Sensor.Community itself states neither a credit nor share-alike terms, and the archive and its files carry no licence text. The owner dropped the source and chose openSenseMap. |
+| openSenseMap archive: a folder per day, a folder per box inside it, one CSV per sensor and one JSON metadata file; openly downloadable | Tried by hand 2026-10-05 (archive.opensensemap.org): the listing has a folder for every day from 2014-06-03. One box was downloaded without credentials for 2026-10-04 and for 2025-01-01. On both days it had PM2.5, PM10, temperature and humidity files with the header `createdAt,value` and UTC timestamps, about 2.5 minutes apart, and a metadata file giving each sensor's name, unit and hardware. This was one box, not a scripted check: the lag, other boxes and how owners name sensors are unverified -> checks above. |
+| openSenseMap data licence | Read 2026-10-05 in the site's own text (opensensemap.org/translations/en_US.json): "All data is licensed under Public Domain Dedication and License 1.0 and free to use", and a person registering a box agrees "that the sensor data you submit can be freely used by the public according to the" same licence. The licence summary (opendatacommons.org/licenses/pddl/summary) says "The PDDL imposes no restrictions on your use of the PDDL licensed database." The full licence text was not read -> checks above. |
 | Open-Meteo air-quality API: hourly PM2.5 from CAMS (11 km Europe, 45 km global), no key for non-commercial use, attribution to CAMS and Open-Meteo required, reanalysis from 2013 | Confirmed (open-meteo.com air-quality API docs). Rate limits are not stated on that page. |
 | Open-Meteo historical weather API: hourly `temperature_2m` and `relative_humidity_2m`; ERA5 at about 25 km from 1940, ERA5-Land at about 11 km from 1950, ECMWF IFS at 9 km from 2017; no key for non-commercial use | Confirmed 2026-10-04 (open-meteo.com/en/docs/historical-weather-api). Rate limits and the exact licence text are not on that page. |
 | OGC SensorThings API Part 1: Sensing, version 1.1, has eight entities: Thing, Location, HistoricalLocation, Datastream, Sensor, ObservedProperty, Observation, FeatureOfInterest | Confirmed 2026-10-04 (docs.ogc.org/is/18-088/18-088.html). UCUM 1.9 is a normative reference; whether a unit must be a UCUM code was not read. The property lists of Datastream and Observation were not read. |

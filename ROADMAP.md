@@ -32,6 +32,7 @@ flowchart LR
   t0_3["0.3 dbt check"]
   t0_4["0.4 OpenAQ file check"]
   t0_5["0.5 Sensor.Community check"]
+  t0_5b["0.5b openSenseMap check"]
   t0_6["0.6 Vocabulary check"]
   t0_7["0.7 City candidates"]
   t0_8["0.8 Source manifests"]
@@ -39,17 +40,18 @@ flowchart LR
   oF --> t0_2
   t0_1 --> t0_4
   t0_1 --> t0_5
+  t0_1 --> t0_5b
   t0_1 --> t0_6
   t0_2 --> t0_3
   t0_4 --> t0_7
-  t0_5 --> t0_7
+  t0_5b --> t0_7
   oA --> t0_7
   t0_7 --> oB
   t0_7 --> t0_8
   oB --> t0_8
 ```
 
-**Order of work:** 0.1, then 0.2, 0.4, 0.5 and 0.6 side by side, then 0.3 and 0.7, then 0.8.
+**Order of work:** 0.1, then 0.2, 0.4, 0.5, 0.5b and 0.6 side by side, then 0.3 and 0.7, then 0.8.
 
 - [ ] **Owner A: Get an OpenAQ API key.**
   Register at explore.openaq.org. The key stays on your machine and is never committed.
@@ -69,17 +71,20 @@ flowchart LR
 - [ ] **0.3 dbt check.** dbt builds one model into that Iceberg catalog. The dbt and DuckDB versions are pinned as tested.
   Needs: 0.2. Done when: one command builds the model, or the fallback is recorded with the reason.
 
-- [ ] **0.4 OpenAQ file check.** Download one real day file without credentials and compare it with what the plan expects: header, exact unit text, hour convention, and how many days late files arrive.
+- [x] **0.4 OpenAQ file check.** Download one real day file without credentials and compare it with what the plan expects: header, exact unit text, hour convention, and how many days late files arrive.
   Needs: 0.1. Done when: a script prints each finding next to the expected value.
 
-- [ ] **0.5 Sensor.Community check.** The licence read from a primary source. The columns of a dust file and of a temperature and humidity file, how the two join, how far apart readings are, and how many days late files arrive. The proposed valid ranges compared with real values.
+- [x] **0.5 Sensor.Community check.** The licence read from a primary source. The columns of a dust file and of a temperature and humidity file, how the two join, how far apart readings are, and how many days late files arrive. The proposed valid ranges compared with real values.
   Needs: 0.1. Done when: the findings are recorded with their sources. If the licence is missing or unclear, the decision comes to the owner.
+
+- [x] **0.5b openSenseMap check.** openSenseMap replaces Sensor.Community as the low-cost source, because task 0.5 found Sensor.Community's licence conditions unclear and the owner dropped it. The licence read from a primary source. The files of a box's PM2.5, temperature and humidity sensors, how box owners name their sensors, how far apart readings are, and how many days late a day's folder appears. The proposed valid ranges compared with real values.
+  Needs: 0.1. Done when: a script prints the findings, and they are recorded with their sources. If the licence is missing or unclear, the decision comes to the owner.
 
 - [x] **0.6 Vocabulary check.** The standard names, the unit spellings and the WHO 15 µg/m³ value confirmed at their sources.
   Needs: 0.1. Done when: a short record with links is committed, and the vocabulary table in `plan.md` is corrected if anything differs.
 
 - [ ] **0.7 City candidates.** A script lists cities where a reference monitor has low-cost sensors within about 1 km, with data from both since January 2025. It also reports whether each monitor measures temperature or humidity.
-  Needs: 0.4, 0.5, Owner A. Done when: the script prints a table of candidates for the owner to choose from.
+  Needs: 0.4, 0.5b, Owner A. Done when: the script prints a table of candidates for the owner to choose from.
 
 - [ ] **0.8 Source manifests.** For the chosen stations: ids, sensors and their parameters, unit text as found, timezone, licence and its permissions, gaps, and file hashes.
   Needs: 0.7, Owner B. Done when: the manifest files are committed and a test validates them.
@@ -206,7 +211,7 @@ flowchart LR
 
 ## Milestone 2: The low-cost source and a second city
 
-Sensor.Community is added with its temperature and humidity readings, and a second city makes the output a comparison. This answers question 2 (how far low-cost sensors are from the monitor), question 4 (which stations have unhealthy data) and question 5 (what data exists), and adds the dashboard.
+openSenseMap is added with its temperature and humidity readings, and a second city makes the output a comparison. This answers question 2 (how far low-cost sensors are from the monitor), question 4 (which stations have unhealthy data) and question 5 (what data exists), and adds the dashboard.
 
 **At the end you can show:** the dashboard across two cities.
 
@@ -215,9 +220,9 @@ In this milestone the humidity and temperature bands use each sensor's own readi
 ```mermaid
 flowchart LR
   oD(["Owner D: choose the dashboard tool"])
-  t2_1["2.1 Sensor.Community contracts"]
+  t2_1["2.1 openSenseMap contract"]
   t2_2["2.2 Temperature and humidity"]
-  t2_3["2.3 Sensor.Community adapter"]
+  t2_3["2.3 openSenseMap adapter"]
   t2_4["2.4 Registry for two cities"]
   t2_5["2.5 Averaging to the hour"]
   t2_6["2.6 Backfill and publish"]
@@ -258,16 +263,16 @@ flowchart LR
 - [ ] **Owner D: Choose the dashboard tool.**
   `plan.md` does not name one. The options are put to the owner before task 2.11.
 
-- [ ] **2.1 Sensor.Community contracts.** Contracts for the dust file and for the temperature and humidity file, including the time convention and how readings closer than an hour are averaged.
-  Needs: 0.5. Done when: tests load both contracts.
+- [ ] **2.1 openSenseMap contract.** The contract for a box's sensor files, including the time convention, how readings closer than an hour are averaged, and how a sensor's parameter is read from the box's metadata file.
+  Needs: 0.5b. Done when: tests load the contract.
 
 - [ ] **2.2 Temperature and humidity.** Two rows in the vocabulary and their mappings in the contracts, with no model changed.
   Needs: 2.1. Done when: a test shows the models build for all three parameters and that no model file changed.
 
-- [ ] **2.3 Sensor.Community adapter.** Download a sensor's daily files, using the year-folder address for days up to 2025 and the top-level address for 2026. Test data is committed if the licence allows.
-  Needs: 2.1. Done when: one command downloads a day from each address form.
+- [ ] **2.3 openSenseMap adapter.** Download a box's daily files, one per sensor, with its metadata file. Test data is committed if the licence allows.
+  Needs: 2.1. Done when: one command downloads a day from 2025 and a day from 2026.
 
-- [ ] **2.4 Registry for two cities.** The second city's monitor and both cities' low-cost sensors, with a box's dust sensor and its temperature and humidity sensor joined by location id.
+- [ ] **2.4 Registry for two cities.** The second city's monitor and both cities' low-cost sensors, with a box's PM2.5, temperature and humidity sensors joined by box id.
   Needs: 2.3. Done when: the registry tests pass for both cities.
 
 - [ ] **2.5 Averaging to the hour.** Readings closer than an hour are averaged to the hour the way the contract says.
