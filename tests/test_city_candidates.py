@@ -107,3 +107,10 @@ def test_pairs_are_within_the_radius_and_grouped_into_cities():
         "           box " + "a" * 24 + " Box a: PM2.5 on 7 of 8 sample days",
     ]
     assert len(lines) == 11
+
+
+def test_a_city_never_spans_more_than_20_km():
+    spots = [52.0, 52.135, 52.27]  # 15 km apart: the first and the last are 30 km apart
+    reference = monitors([monitor(n, lat=lat) for n, lat in enumerate(spots)], NOW)
+    low_cost = boxes([box("abc"[n], lat=lat) for n, lat in enumerate(spots)], NOW)
+    assert [len(group) for group in cities(pairs(reference, low_cost, 1.0))] == [2, 1]

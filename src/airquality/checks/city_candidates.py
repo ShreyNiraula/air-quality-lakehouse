@@ -125,12 +125,13 @@ def pairs(reference: list[Place], low_cost: list[Place], radius: float) -> list[
 
 
 def cities(found: list[Pair]) -> list[list[Pair]]:
-    """Pairs grouped into cities: monitors within CITY_KM of one another share a city."""
+    """Pairs grouped into cities: no two monitors of a city are more than CITY_KM apart."""
     groups: list[list[Pair]] = []
     for pair in sorted(found, key=lambda pair: (pair.monitor.id, pair.box.id)):
-        near = [g for g in groups if any(km(pair.monitor, other.monitor) <= CITY_KM for other in g)]
-        merged = [pair] + [other for group in near for other in group]
-        groups = [group for group in groups if group not in near] + [merged]
+        fits = (g for g in groups if all(km(pair.monitor, p.monitor) <= CITY_KM for p in g))
+        if (home := next(fits, None)) is None:
+            groups.append(home := [])
+        home.append(pair)
     return sorted(groups, key=lambda group: (-len(group), label(group)))
 
 
