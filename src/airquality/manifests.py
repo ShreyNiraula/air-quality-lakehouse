@@ -8,6 +8,7 @@ and its MD5 in `<source>-files.csv`. OpenAQ needs a key in OPENAQ_API_KEY; it is
 """
 
 import csv
+import hashlib
 import json
 import os
 import re
@@ -16,14 +17,17 @@ import sys
 import xml.etree.ElementTree as ET
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
+from time import sleep
 from zoneinfo import ZoneInfo
 
-from airquality.checks import openaq_file
+from airquality.checks import openaq_file, opensensemap
 from airquality.checks.city_candidates import fetch  # waits between requests
 
 OUT = Path(__file__).parents[2] / "manifests" / "generated"
 START = date(2025, 1, 1)  # the first day plan.md loads
 SETTLED = timedelta(days=7)  # the OpenAQ archive holds a day's file by then (check 0.4)
+BOX_WINDOW = date(2025, 1, 31)  # box files are listed to here: each one has to be downloaded
+ZONES = {"Berlin": "Europe/Berlin", "Wien": "Europe/Vienna"}  # the archive's own times are UTC
 # The owner's choice of 6 October 2026: each openSenseMap box, its city, and the OpenAQ monitor
 # within 1 km of it (check 0.7).
 PAIRS = {
@@ -60,6 +64,16 @@ LICENCES = {
         ],
         "permissions": dict(zip(PERMISSIONS, (True, True, True, True, False), strict=True)),
         "credit": "European Environment Agency (EEA), via OpenAQ",
+    },
+    "opensensemap": {  # read in check 0.5b
+        "name": "PDDL 1.0",
+        "statements": [
+            {"by": "openSenseMap", "url": opensensemap.SITE_TEXT,
+             "says": "All data is licensed under Public Domain Dedication and License 1.0 and "
+                     "free to use."},
+        ],
+        "permissions": dict(zip(PERMISSIONS, (True, True, True, False, False), strict=True)),
+        "credit": "openSenseMap (a credit is not required)",
     },
 }  # fmt: skip
 
@@ -120,9 +134,79 @@ def openaq(key: str, last: date) -> tuple[dict, list[dict]]:
                 [row["datetime"] for row in table if row["parameter"] == "pm25"]
             ),
             "first_reading": place["datetimeFirst"]["utc"],
+            "last_reading": place["datetimeLast"]["utc"],
             "dates_with_no_file": {"location": [day for day in period if day not in files]},
         })  # fmt: skip
     return manifest("openaq", last, stations), rows
+
+
+def patient(url: str) -> bytes:
+    """`fetch`, tried three times: the openSenseMap archive sometimes drops a connection."""
+    for attempt in range(3):
+        try:
+            return fetch(url)
+        except OSError:
+            if attempt == 2:
+                raise
+            sleep(5)
+    raise AssertionError("not reached")
+
+
+def boxes() -> tuple[dict, list[dict]]:
+    """The manifest of the openSenseMap boxes, and one row per file the project reads.
+
+    Those are, to BOX_WINDOW, a box's metadata file of each day and the files of its PM2.5,
+    temperature and humidity sensors. Its other sensors are listed; their files are not read.
+    """
+    window, archive = days(START, BOX_WINDOW), opensensemap.ARCHIVE
+    listings = {
+        d: opensensemap.BOX_FOLDER.findall(patient(f"{archive}/{d}/").decode()) for d in window
+    }
+    stations, rows = [], []
+    for box, (city, monitor) in PAIRS.items():
+        meta, have, stamps = None, {"metadata": set()}, []
+        for day in window:
+            folder = next((name for name in listings[day] if name.startswith(box)), None)
+            names = (
+                re.findall(r'href="\./([^"]+)"', patient(f"{archive}/{day}/{folder}").decode())
+                if folder
+                else []
+            )
+            for name in (name for name in names if name.endswith(".json")):
+                raw = patient(f"{archive}/{day}/{folder}{name}")
+                meta = meta or json.loads(raw)  # as the first day in the window gives it
+                rows.append(row(box, "metadata", day, raw))
+                have["metadata"].add(day)
+            for sensor in (meta or {}).get("sensors", []):
+                kind, name = opensensemap.parameter(sensor), f"{sensor['_id']}-{day}.csv"
+                if kind and name in names:
+                    raw = patient(f"{archive}/{day}/{folder}{name}")
+                    rows.append(row(box, sensor["_id"], day, raw))
+                    have.setdefault(sensor["_id"], set()).add(day)
+                    if kind == "pm25":
+                        stamps += [line.split(",")[0] for line in raw.decode().splitlines()[1:]]
+        if meta is None:
+            sys.exit(f"Box {box} has no folder from {START} to {BOX_WINDOW}.")
+        placed = [sensor["_id"] for sensor in meta["sensors"] if opensensemap.parameter(sensor)]
+        stations.append({
+            "id": box, "name": meta.get("name"), "city": city, "timezone": ZONES[city],
+            "latitude": meta.get("latitude"), "longitude": meta.get("longitude"),
+            "provider": "openSenseMap", "near_monitor": monitor, "exposure": meta.get("exposure"),
+            "sensors": [{"id": sensor["_id"], "parameter": opensensemap.parameter(sensor),
+                         "name_as_found": sensor.get("title"), "unit_as_found": sensor.get("unit"),
+                         "hardware": sensor.get("sensorType")} for sensor in meta["sensors"]],
+            "seconds_between_rows": spacing(stamps),
+            "first_reading": min(stamps, default=None),
+            "last_reading": max(stamps, default=None),
+            "dates_with_no_file": {name: [day for day in window if day not in have.get(name, ())]
+                                   for name in ["metadata", *placed]},
+        })  # fmt: skip
+    return manifest("opensensemap", BOX_WINDOW, stations), rows
+
+
+def row(station: str, series: str, day: str, raw: bytes) -> dict:
+    return {"station": station, "series": series, "date": day,
+            "md5": hashlib.md5(raw).hexdigest(), "bytes": len(raw)}  # fmt: skip
 
 
 def manifest(source: str, last: date, stations: list[dict]) -> dict:
@@ -165,6 +249,17 @@ def validate(manifest: dict, rows: list[dict]) -> list[str]:
             ZoneInfo(station["timezone"])
         except (KeyError, ValueError):
             problems.append(f"{where}: unknown timezone")
+        needed = (
+            "name",
+            "city",
+            "provider",
+            "latitude",
+            "longitude",
+            "first_reading",
+            "last_reading",
+        )
+        if lacking := [key for key in needed if station.get(key) in (None, "")]:
+            problems.append(f"{where}: no {', '.join(lacking)}")
         kinds = [sensor["parameter"] for sensor in station["sensors"] if sensor["parameter"]]
         if kinds.count("pm25") != 1 or len(set(kinds)) != len(kinds):
             problems.append(f"{where}: needs exactly one PM2.5 sensor, and no parameter twice")
@@ -192,7 +287,7 @@ def main() -> int:
         sys.exit("Set OPENAQ_API_KEY to your OpenAQ API key first. It is read, never printed.")
     OUT.mkdir(parents=True, exist_ok=True)
     failed = 0
-    for built, rows in [openaq(key, datetime.now(UTC).date() - SETTLED)]:
+    for built, rows in (openaq(key, datetime.now(UTC).date() - SETTLED), boxes()):
         source = built["source"]
         (OUT / f"{source}.json").write_text(json.dumps(built, indent=2, ensure_ascii=False) + "\n")
         with open(OUT / f"{source}-files.csv", "w", newline="") as table:

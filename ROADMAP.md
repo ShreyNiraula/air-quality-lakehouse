@@ -91,7 +91,7 @@ flowchart LR
 - [x] **0.8a Manifest format and OpenAQ manifest.** Task 0.8 was split in two to stay within the size rule. The format of a source manifest and the test that validates one. The manifest of the chosen OpenAQ monitors: ids, sensors and their parameters, unit text as found, timezone, licence and its permissions, the dates with no file and the hash of every file since 1 January 2025.
   Needs: 0.7, Owner B. Done when: the manifest is committed and a test validates it.
 
-- [ ] **0.8b openSenseMap manifest.** The same for the chosen openSenseMap boxes. Its dates with no file and its file hashes cover January 2025 only, because they need every file downloaded; the backfill (task 1.9) adds the rest.
+- [x] **0.8b openSenseMap manifest.** The same for the chosen openSenseMap boxes. Its dates with no file and its file hashes cover January 2025 only, because they need every file downloaded; the backfill of both sources (task 2.6) adds the rest.
   Needs: 0.8a. Done when: the manifest is committed and the same test validates it.
 
 ---
@@ -283,7 +283,7 @@ flowchart LR
 - [ ] **2.5 Averaging to the hour.** Readings closer than an hour are averaged to the hour the way the contract says.
   Needs: 2.2, 2.3. Done when: tests cover a full hour, a partly missing hour and an empty hour.
 
-- [ ] **2.6 Backfill and publish.** Both sources and both cities are loaded from January 2025 and published through the gate.
+- [ ] **2.6 Backfill and publish.** Both sources and both cities are loaded from January 2025 and published through the gate. The openSenseMap manifest's dates with no file and its file hashes are extended from January 2025 to the whole period.
   Needs: 2.4, 2.5. Done when: one release holds both cities, and the catalog lists every datastream.
 
 - [ ] **2.7 Pairing.** A low-cost sensor is paired with a monitor only if it is within about 1 km and they share at least 70% of hours. A city is used only with at least three pairs.
