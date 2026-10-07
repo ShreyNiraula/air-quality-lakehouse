@@ -31,11 +31,14 @@ ROWS = [
 ]
 
 
-def test_the_committed_openaq_manifest_is_sound():
-    manifest, rows = read("openaq")
+@pytest.mark.parametrize(
+    ("source", "stations", "files"), [("openaq", 6, 3000), ("opensensemap", 7, 500)]
+)
+def test_the_committed_manifests_are_sound(source, stations, files):
+    manifest, rows = read(source)
     assert validate(manifest, rows) == []
     assert {station["city"] for station in manifest["stations"]} == {"Berlin", "Wien"}
-    assert len(manifest["stations"]) == 6 and len(rows) > 3000
+    assert len(manifest["stations"]) == stations and len(rows) > files
 
 
 def broken(change):

@@ -6,11 +6,12 @@ A manifest says, for one source, which stations the project uses, what each sens
 uv run python -m airquality.manifests
 ```
 
-It needs the OpenAQ key in `OPENAQ_API_KEY` and takes about a minute. `tests/test_manifests.py` validates what is committed.
+It needs the OpenAQ key in `OPENAQ_API_KEY` and takes about eleven minutes, nearly all of it for the openSenseMap files, which are downloaded one by one. `tests/test_manifests.py` validates what is committed.
 
 - `generated/openaq.json`: the six reference monitors of Berlin and Wien, the owner's choice of 6 October 2026 (task 0.8a).
 - `generated/openaq-files.csv`: one line per day file from 1 January 2025, with its MD5 and size.
-- The openSenseMap manifest follows in task 0.8b.
+- `generated/opensensemap.json`: the seven openSenseMap boxes within 1 km of those monitors (task 0.8b).
+- `generated/opensensemap-files.csv`: one line per sensor file of January 2025, with its MD5 and size. The backfill of both sources (task 2.6) extends it to the whole period.
 
 ## The licence of the OpenAQ monitors
 
@@ -27,3 +28,15 @@ Two sources state it, and the manifest quotes both with their addresses.
 - **The gaps come in blocks shared by a city.** All three Berlin monitors have no file from 15 to 23 August 2026. All three Wien monitors have none from 18 to 21 April 2025 and from 7 to 18 October 2025. No monitor has a file for 3 May 2025.
 - **The newest days of Wien have no file yet.** The Wien monitors have none from 21 or 22 September 2026 to the end. Check 0.4 measured the archive's delay on one station in the USA, as four days; these files may be late, not missing. A later run of the script will tell.
 - **The hash is the MD5 that the archive's listing gives for each file** (its `ETag`), so no file had to be downloaded for it. Checked by hand on three files: the MD5 of the download equals the listed one.
+
+## What the openSenseMap manifest shows (written 7 October 2026)
+
+The licence is PDDL 1.0, read in check 0.5b: everything is allowed and no credit is required.
+
+- **564 sensor files and 87 dates with no file**, for the PM2.5, temperature and humidity sensors of seven boxes in January 2025.
+- **Every box has exactly one sensor of each of the three kinds**, named `PM2.5`, `Temperatur` and `rel. Luftfeuchte`, with the unit texts `µg/m³`, `°C` and `%`. Each box also has a PM10 sensor, and five have a pressure sensor; the manifest lists them with no parameter. The sensors were placed by the rule of check 0.5b, and the names were read by eye.
+- **Every PM2.5 sensor is an SDS011.** A reading comes about every 125 to 187 seconds, and every 309 seconds from one box.
+- **No box has a file for 23 or 28 January 2025.** The archive has no folder for those two days at all, as check 0.5b found.
+- **One Wien box was silent for 13 days.** `WA_Luftsensor`, the box near monitor 4563, has no file from 12 to 24 January 2025: 17 files in 31 days. Wien has exactly three pairs, and a pair is compared only if it shares 70% of hours.
+- **One Berlin box ends early.** `Feinstaub Scharnweber`, near monitor 4767, has no file from 29 to 31 January 2025.
+- **The times in the files are UTC.** The manifest gives each box the timezone of its city, which the daily tables need.

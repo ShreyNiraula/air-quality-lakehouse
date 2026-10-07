@@ -1,0 +1,481 @@
+{
+  "source": "opensensemap",
+  "written": "2026-10-07",
+  "files": {
+    "from": "2025-01-01",
+    "to": "2025-01-31",
+    "list": "opensensemap-files.csv",
+    "hash": "md5"
+  },
+  "licence": {
+    "name": "PDDL 1.0",
+    "statements": [
+      {
+        "by": "openSenseMap",
+        "url": "https://opensensemap.org/translations/en_US.json",
+        "says": "All data is licensed under Public Domain Dedication and License 1.0 and free to use."
+      }
+    ],
+    "permissions": {
+      "redistribution": true,
+      "modification": true,
+      "commercial_use": true,
+      "attribution": false,
+      "share_alike": false
+    },
+    "credit": "openSenseMap (a credit is not required)"
+  },
+  "stations": [
+    {
+      "id": "5c2bca0e2c80100019218e6b",
+      "name": "HeinrichsSensor",
+      "city": "Berlin",
+      "timezone": "Europe/Berlin",
+      "near_monitor": "3019",
+      "exposure": "outdoor",
+      "sensors": [
+        {
+          "id": "5c2bca0e2c80100019218e6f",
+          "parameter": null,
+          "name_as_found": "PM10",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "5c2bca0e2c80100019218e6e",
+          "parameter": "pm25",
+          "name_as_found": "PM2.5",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "5c2bca0e2c80100019218e6d",
+          "parameter": "temperature",
+          "name_as_found": "Temperatur",
+          "unit_as_found": "°C",
+          "hardware": "DHT22"
+        },
+        {
+          "id": "5c2bca0e2c80100019218e6c",
+          "parameter": "relative_humidity",
+          "name_as_found": "rel. Luftfeuchte",
+          "unit_as_found": "%",
+          "hardware": "DHT22"
+        }
+      ],
+      "seconds_between_rows": 187,
+      "first_reading": "2025-01-01T00:01:54.376Z",
+      "dates_with_no_file": {
+        "5c2bca0e2c80100019218e6e": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
+        "5c2bca0e2c80100019218e6d": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
+        "5c2bca0e2c80100019218e6c": [
+          "2025-01-23",
+          "2025-01-28"
+        ]
+      }
+    },
+    {
+      "id": "5d78d78f953683001a412c1d",
+      "name": "Balkonium_1",
+      "city": "Berlin",
+      "timezone": "Europe/Berlin",
+      "near_monitor": "4762",
+      "exposure": "outdoor",
+      "sensors": [
+        {
+          "id": "5d78d78f953683001a412c22",
+          "parameter": null,
+          "name_as_found": "PM10",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "5d78d78f953683001a412c21",
+          "parameter": "pm25",
+          "name_as_found": "PM2.5",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "5d78d78f953683001a412c20",
+          "parameter": "temperature",
+          "name_as_found": "Temperatur",
+          "unit_as_found": "°C",
+          "hardware": "BME280"
+        },
+        {
+          "id": "5d78d78f953683001a412c1f",
+          "parameter": "relative_humidity",
+          "name_as_found": "rel. Luftfeuchte",
+          "unit_as_found": "%",
+          "hardware": "BME280"
+        },
+        {
+          "id": "5d78d78f953683001a412c1e",
+          "parameter": null,
+          "name_as_found": "Luftdruck",
+          "unit_as_found": "Pa",
+          "hardware": "BME280"
+        }
+      ],
+      "seconds_between_rows": 149,
+      "first_reading": "2025-01-01T00:02:55.084Z",
+      "dates_with_no_file": {
+        "5d78d78f953683001a412c21": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
+        "5d78d78f953683001a412c20": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
+        "5d78d78f953683001a412c1f": [
+          "2025-01-23",
+          "2025-01-28"
+        ]
+      }
+    },
+    {
+      "id": "5cd9440aff898b001a3ba6c0",
+      "name": "Berlin Steglitz",
+      "city": "Berlin",
+      "timezone": "Europe/Berlin",
+      "near_monitor": "4762",
+      "exposure": "outdoor",
+      "sensors": [
+        {
+          "id": "5cd9440aff898b001a3ba6c4",
+          "parameter": null,
+          "name_as_found": "PM10",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "5cd9440aff898b001a3ba6c3",
+          "parameter": "pm25",
+          "name_as_found": "PM2.5",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "5cd9440aff898b001a3ba6c2",
+          "parameter": "temperature",
+          "name_as_found": "Temperatur",
+          "unit_as_found": "°C",
+          "hardware": "DHT22"
+        },
+        {
+          "id": "5cd9440aff898b001a3ba6c1",
+          "parameter": "relative_humidity",
+          "name_as_found": "rel. Luftfeuchte",
+          "unit_as_found": "%",
+          "hardware": "DHT22"
+        }
+      ],
+      "seconds_between_rows": 152,
+      "first_reading": "2025-01-01T00:01:55.275Z",
+      "dates_with_no_file": {
+        "5cd9440aff898b001a3ba6c3": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
+        "5cd9440aff898b001a3ba6c2": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
+        "5cd9440aff898b001a3ba6c1": [
+          "2025-01-23",
+          "2025-01-28"
+        ]
+      }
+    },
+    {
+      "id": "638e0a9185229d001bbc8cd3",
+      "name": "Feinstaub Scharnweber",
+      "city": "Berlin",
+      "timezone": "Europe/Berlin",
+      "near_monitor": "4767",
+      "exposure": "outdoor",
+      "sensors": [
+        {
+          "id": "638e0a9185229d001bbc8cd8",
+          "parameter": null,
+          "name_as_found": "PM10",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "638e0a9185229d001bbc8cd7",
+          "parameter": "pm25",
+          "name_as_found": "PM2.5",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "638e0a9185229d001bbc8cd6",
+          "parameter": "temperature",
+          "name_as_found": "Temperatur",
+          "unit_as_found": "°C",
+          "hardware": "BME280"
+        },
+        {
+          "id": "638e0a9185229d001bbc8cd5",
+          "parameter": "relative_humidity",
+          "name_as_found": "rel. Luftfeuchte",
+          "unit_as_found": "%",
+          "hardware": "BME280"
+        },
+        {
+          "id": "638e0a9185229d001bbc8cd4",
+          "parameter": null,
+          "name_as_found": "Luftdruck",
+          "unit_as_found": "Pa",
+          "hardware": "BME280"
+        }
+      ],
+      "seconds_between_rows": 151,
+      "first_reading": "2025-01-01T00:00:35.294Z",
+      "dates_with_no_file": {
+        "638e0a9185229d001bbc8cd7": [
+          "2025-01-23",
+          "2025-01-28",
+          "2025-01-29",
+          "2025-01-30",
+          "2025-01-31"
+        ],
+        "638e0a9185229d001bbc8cd6": [
+          "2025-01-23",
+          "2025-01-28",
+          "2025-01-29",
+          "2025-01-30",
+          "2025-01-31"
+        ],
+        "638e0a9185229d001bbc8cd5": [
+          "2025-01-23",
+          "2025-01-28",
+          "2025-01-29",
+          "2025-01-30",
+          "2025-01-31"
+        ]
+      }
+    },
+    {
+      "id": "61edcc57f4d1e2001c57dc87",
+      "name": "Feinstaubsensor",
+      "city": "Wien",
+      "timezone": "Europe/Vienna",
+      "near_monitor": "2876226",
+      "exposure": "outdoor",
+      "sensors": [
+        {
+          "id": "61edcc57f4d1e2001c57dc8c",
+          "parameter": null,
+          "name_as_found": "PM10",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "61edcc57f4d1e2001c57dc8b",
+          "parameter": "pm25",
+          "name_as_found": "PM2.5",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "61edcc57f4d1e2001c57dc8a",
+          "parameter": "temperature",
+          "name_as_found": "Temperatur",
+          "unit_as_found": "°C",
+          "hardware": "BME280"
+        },
+        {
+          "id": "61edcc57f4d1e2001c57dc89",
+          "parameter": "relative_humidity",
+          "name_as_found": "rel. Luftfeuchte",
+          "unit_as_found": "%",
+          "hardware": "BME280"
+        },
+        {
+          "id": "61edcc57f4d1e2001c57dc88",
+          "parameter": null,
+          "name_as_found": "Luftdruck",
+          "unit_as_found": "Pa",
+          "hardware": "BME280"
+        }
+      ],
+      "seconds_between_rows": 149,
+      "first_reading": "2025-01-01T00:00:05.196Z",
+      "dates_with_no_file": {
+        "61edcc57f4d1e2001c57dc8b": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
+        "61edcc57f4d1e2001c57dc8a": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
+        "61edcc57f4d1e2001c57dc89": [
+          "2025-01-23",
+          "2025-01-28"
+        ]
+      }
+    },
+    {
+      "id": "620d4c8be00700001bf99c92",
+      "name": "eintopf",
+      "city": "Wien",
+      "timezone": "Europe/Vienna",
+      "near_monitor": "4520",
+      "exposure": "outdoor",
+      "sensors": [
+        {
+          "id": "620d4c8be00700001bf99c97",
+          "parameter": null,
+          "name_as_found": "PM10",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "620d4c8be00700001bf99c96",
+          "parameter": "pm25",
+          "name_as_found": "PM2.5",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "620d4c8be00700001bf99c95",
+          "parameter": "temperature",
+          "name_as_found": "Temperatur",
+          "unit_as_found": "°C",
+          "hardware": "BME280"
+        },
+        {
+          "id": "620d4c8be00700001bf99c94",
+          "parameter": "relative_humidity",
+          "name_as_found": "rel. Luftfeuchte",
+          "unit_as_found": "%",
+          "hardware": "BME280"
+        },
+        {
+          "id": "620d4c8be00700001bf99c93",
+          "parameter": null,
+          "name_as_found": "Luftdruck",
+          "unit_as_found": "Pa",
+          "hardware": "BME280"
+        }
+      ],
+      "seconds_between_rows": 125,
+      "first_reading": "2025-01-01T00:01:38.525Z",
+      "dates_with_no_file": {
+        "620d4c8be00700001bf99c96": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
+        "620d4c8be00700001bf99c95": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
+        "620d4c8be00700001bf99c94": [
+          "2025-01-23",
+          "2025-01-28"
+        ]
+      }
+    },
+    {
+      "id": "5c532a5135809500190b39cb",
+      "name": "WA_Luftsensor",
+      "city": "Wien",
+      "timezone": "Europe/Vienna",
+      "near_monitor": "4563",
+      "exposure": "outdoor",
+      "sensors": [
+        {
+          "id": "5c532a5135809500190b39cf",
+          "parameter": null,
+          "name_as_found": "PM10",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "5c532a5135809500190b39ce",
+          "parameter": "pm25",
+          "name_as_found": "PM2.5",
+          "unit_as_found": "µg/m³",
+          "hardware": "SDS 011"
+        },
+        {
+          "id": "5c532a5135809500190b39cd",
+          "parameter": "temperature",
+          "name_as_found": "Temperatur",
+          "unit_as_found": "°C",
+          "hardware": "DHT22"
+        },
+        {
+          "id": "5c532a5135809500190b39cc",
+          "parameter": "relative_humidity",
+          "name_as_found": "rel. Luftfeuchte",
+          "unit_as_found": "%",
+          "hardware": "DHT22"
+        }
+      ],
+      "seconds_between_rows": 309,
+      "first_reading": "2025-01-01T00:00:45.965Z",
+      "dates_with_no_file": {
+        "5c532a5135809500190b39ce": [
+          "2025-01-12",
+          "2025-01-13",
+          "2025-01-14",
+          "2025-01-15",
+          "2025-01-16",
+          "2025-01-17",
+          "2025-01-18",
+          "2025-01-19",
+          "2025-01-20",
+          "2025-01-21",
+          "2025-01-22",
+          "2025-01-23",
+          "2025-01-24",
+          "2025-01-28"
+        ],
+        "5c532a5135809500190b39cd": [
+          "2025-01-12",
+          "2025-01-13",
+          "2025-01-14",
+          "2025-01-15",
+          "2025-01-16",
+          "2025-01-17",
+          "2025-01-18",
+          "2025-01-19",
+          "2025-01-20",
+          "2025-01-21",
+          "2025-01-22",
+          "2025-01-23",
+          "2025-01-24",
+          "2025-01-28"
+        ],
+        "5c532a5135809500190b39cc": [
+          "2025-01-12",
+          "2025-01-13",
+          "2025-01-14",
+          "2025-01-15",
+          "2025-01-16",
+          "2025-01-17",
+          "2025-01-18",
+          "2025-01-19",
+          "2025-01-20",
+          "2025-01-21",
+          "2025-01-22",
+          "2025-01-23",
+          "2025-01-24",
+          "2025-01-28"
+        ]
+      }
+    }
+  ]
+}
