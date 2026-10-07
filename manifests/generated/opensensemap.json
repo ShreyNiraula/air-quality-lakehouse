@@ -31,6 +31,9 @@
       "name": "HeinrichsSensor",
       "city": "Berlin",
       "timezone": "Europe/Berlin",
+      "latitude": 52.508418,
+      "longitude": 13.421859,
+      "provider": "openSenseMap",
       "near_monitor": "3019",
       "exposure": "outdoor",
       "sensors": [
@@ -65,7 +68,12 @@
       ],
       "seconds_between_rows": 187,
       "first_reading": "2025-01-01T00:01:54.376Z",
+      "last_reading": "2025-01-31T23:58:58.164Z",
       "dates_with_no_file": {
+        "metadata": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
         "5c2bca0e2c80100019218e6e": [
           "2025-01-23",
           "2025-01-28"
@@ -85,6 +93,9 @@
       "name": "Balkonium_1",
       "city": "Berlin",
       "timezone": "Europe/Berlin",
+      "latitude": 52.465046,
+      "longitude": 13.323428,
+      "provider": "openSenseMap",
       "near_monitor": "4762",
       "exposure": "outdoor",
       "sensors": [
@@ -126,7 +137,12 @@
       ],
       "seconds_between_rows": 149,
       "first_reading": "2025-01-01T00:02:55.084Z",
+      "last_reading": "2025-01-31T23:56:38.980Z",
       "dates_with_no_file": {
+        "metadata": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
         "5d78d78f953683001a412c21": [
           "2025-01-23",
           "2025-01-28"
@@ -146,6 +162,9 @@
       "name": "Berlin Steglitz",
       "city": "Berlin",
       "timezone": "Europe/Berlin",
+      "latitude": 52.46034,
+      "longitude": 13.321467,
+      "provider": "openSenseMap",
       "near_monitor": "4762",
       "exposure": "outdoor",
       "sensors": [
@@ -180,7 +199,12 @@
       ],
       "seconds_between_rows": 152,
       "first_reading": "2025-01-01T00:01:55.275Z",
+      "last_reading": "2025-01-31T23:59:03.289Z",
       "dates_with_no_file": {
+        "metadata": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
         "5cd9440aff898b001a3ba6c3": [
           "2025-01-23",
           "2025-01-28"
@@ -200,6 +224,9 @@
       "name": "Feinstaub Scharnweber",
       "city": "Berlin",
       "timezone": "Europe/Berlin",
+      "latitude": 52.513167,
+      "longitude": 13.462802,
+      "provider": "openSenseMap",
       "near_monitor": "4767",
       "exposure": "outdoor",
       "sensors": [
@@ -241,7 +268,15 @@
       ],
       "seconds_between_rows": 151,
       "first_reading": "2025-01-01T00:00:35.294Z",
+      "last_reading": "2025-01-27T18:45:47.163Z",
       "dates_with_no_file": {
+        "metadata": [
+          "2025-01-23",
+          "2025-01-28",
+          "2025-01-29",
+          "2025-01-30",
+          "2025-01-31"
+        ],
         "638e0a9185229d001bbc8cd7": [
           "2025-01-23",
           "2025-01-28",
@@ -270,6 +305,9 @@
       "name": "Feinstaubsensor",
       "city": "Wien",
       "timezone": "Europe/Vienna",
+      "latitude": 48.140343,
+      "longitude": 16.30458,
+      "provider": "openSenseMap",
       "near_monitor": "2876226",
       "exposure": "outdoor",
       "sensors": [
@@ -311,7 +349,12 @@
       ],
       "seconds_between_rows": 149,
       "first_reading": "2025-01-01T00:00:05.196Z",
+      "last_reading": "2025-01-31T23:59:46.655Z",
       "dates_with_no_file": {
+        "metadata": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
         "61edcc57f4d1e2001c57dc8b": [
           "2025-01-23",
           "2025-01-28"
@@ -331,6 +374,9 @@
       "name": "eintopf",
       "city": "Wien",
       "timezone": "Europe/Vienna",
+      "latitude": 48.174496,
+      "longitude": 16.370437,
+      "provider": "openSenseMap",
       "near_monitor": "4520",
       "exposure": "outdoor",
       "sensors": [
@@ -372,7 +418,12 @@
       ],
       "seconds_between_rows": 125,
       "first_reading": "2025-01-01T00:01:38.525Z",
+      "last_reading": "2025-01-31T23:59:23.426Z",
       "dates_with_no_file": {
+        "metadata": [
+          "2025-01-23",
+          "2025-01-28"
+        ],
         "620d4c8be00700001bf99c96": [
           "2025-01-23",
           "2025-01-28"
@@ -392,6 +443,9 @@
       "name": "WA_Luftsensor",
       "city": "Wien",
       "timezone": "Europe/Vienna",
+      "latitude": 48.194586,
+      "longitude": 16.345591,
+      "provider": "openSenseMap",
       "near_monitor": "4563",
       "exposure": "outdoor",
       "sensors": [
@@ -426,7 +480,24 @@
       ],
       "seconds_between_rows": 309,
       "first_reading": "2025-01-01T00:00:45.965Z",
+      "last_reading": "2025-01-31T23:56:49.864Z",
       "dates_with_no_file": {
+        "metadata": [
+          "2025-01-12",
+          "2025-01-13",
+          "2025-01-14",
+          "2025-01-15",
+          "2025-01-16",
+          "2025-01-17",
+          "2025-01-18",
+          "2025-01-19",
+          "2025-01-20",
+          "2025-01-21",
+          "2025-01-22",
+          "2025-01-23",
+          "2025-01-24",
+          "2025-01-28"
+        ],
         "5c532a5135809500190b39ce": [
           "2025-01-12",
           "2025-01-13",

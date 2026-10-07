@@ -18,6 +18,13 @@ MANIFEST = {
     "stations": [
         {
             "id": "1",
+            "name": "A station",
+            "city": "Berlin",
+            "provider": "A source",
+            "latitude": 52.5,
+            "longitude": 13.4,
+            "first_reading": "2025-01-01T00:00:00Z",
+            "last_reading": "2025-01-03T23:00:00Z",
             "timezone": "Europe/Berlin",
             "sensors": [SENSOR],
             "licence_in_source_record": dict.fromkeys(PERMISSIONS, True),
@@ -32,7 +39,7 @@ ROWS = [
 
 
 @pytest.mark.parametrize(
-    ("source", "stations", "files"), [("openaq", 6, 3000), ("opensensemap", 7, 500)]
+    ("source", "stations", "files"), [("openaq", 6, 3000), ("opensensemap", 7, 700)]
 )
 def test_the_committed_manifests_are_sound(source, stations, files):
     manifest, rows = read(source)
@@ -59,6 +66,7 @@ def broken(change):
         (lambda m, s, r: r.append(dict(r[0])), "listed twice"),
         (lambda m, s, r: r.append(r[0] | {"station": "9"}), "unknown one"),
         (lambda m, s, r: s.update(timezone="Mars/Olympus"), "unknown timezone"),
+        (lambda m, s, r: s.update(latitude=None, provider=""), "no provider, latitude"),
         (lambda m, s, r: s["sensors"].append(dict(SENSOR)), "exactly one PM2.5"),
         (lambda m, s, r: s["sensors"][0].update(unit_as_found=""), "no unit text"),
         (lambda m, s, r: s["licence_in_source_record"].update(share_alike=False), "disagrees"),
