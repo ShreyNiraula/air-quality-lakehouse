@@ -14,4 +14,8 @@ lakehouse:  ## start the object store and the Iceberg catalog, then run the lake
 	docker compose up -d --wait
 	uv run python -m airquality.checks.lakehouse
 
-.PHONY: setup lint test check lakehouse
+dbt-check:  ## start the object store and the Iceberg catalog, then run the dbt check
+	docker compose up -d --wait
+	uv run python -m airquality.checks.dbt_build
+
+.PHONY: setup lint test check lakehouse dbt-check

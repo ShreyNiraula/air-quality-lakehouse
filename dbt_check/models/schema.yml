@@ -1,0 +1,5 @@
+models:
+  - name: readings
+    columns:
+      - name: id
+        data_tests: [unique, not_null]
