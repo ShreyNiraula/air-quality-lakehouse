@@ -13,15 +13,13 @@ import os
 import re
 import statistics
 import sys
-import urllib.error
-import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-from time import sleep
 from zoneinfo import ZoneInfo
 
 from airquality.checks import openaq_file
+from airquality.checks.city_candidates import fetch  # waits between requests
 
 OUT = Path(__file__).parents[2] / "manifests" / "generated"
 START = date(2025, 1, 1)  # the first day plan.md loads
@@ -64,21 +62,6 @@ LICENCES = {
         "credit": "European Environment Agency (EEA), via OpenAQ",
     },
 }  # fmt: skip
-
-
-def fetch(url: str, key: str | None = None) -> bytes:
-    """What the address returns, tried three times. OpenAQ allows 60 requests a minute."""
-    request = urllib.request.Request(url, headers={"X-API-Key": key} if key else {})
-    for attempt in range(3):
-        sleep(1.1 if key else 0.1)
-        try:
-            with urllib.request.urlopen(request, timeout=120) as response:
-                return response.read()
-        except (urllib.error.URLError, ConnectionError, TimeoutError):
-            if attempt == 2:
-                raise
-            sleep(5)
-    raise AssertionError("not reached")
 
 
 def days(first: date, last: date) -> list[str]:
