@@ -1,0 +1,445 @@
+{
+  "source": "openaq",
+  "written": "2026-10-07",
+  "files": {
+    "from": "2025-01-01",
+    "to": "2026-09-30",
+    "list": "openaq-files.csv",
+    "hash": "md5"
+  },
+  "licence": {
+    "name": "ODC-BY 1.0 in OpenAQ's record; CC-BY in the EEA's legal notice",
+    "statements": [
+      {
+        "by": "OpenAQ",
+        "url": "https://api.openaq.org/v3/licenses/10",
+        "says": "ODC-BY: attribution required; commercial use, modification and redistribution allowed; share-alike not required."
+      },
+      {
+        "by": "EEA",
+        "url": "https://www.eea.europa.eu/en/legal-notice",
+        "says": "EEA materials are published under the CC-BY license [...] may be re-used without prior permission, free of charge, for commercial or non-commercial purposes, provided that the EEA is always acknowledged as the original source of the material and that the original meaning or message of the content is not distorted."
+      }
+    ],
+    "permissions": {
+      "redistribution": true,
+      "modification": true,
+      "commercial_use": true,
+      "attribution": true,
+      "share_alike": false
+    },
+    "credit": "European Environment Agency (EEA), via OpenAQ"
+  },
+  "stations": [
+    {
+      "id": "3019",
+      "name": "Berlin Mitte",
+      "city": "Berlin",
+      "timezone": "Europe/Berlin",
+      "latitude": 52.51360600001067,
+      "longitude": 13.41883300000022,
+      "provider": "EEA",
+      "licence_in_source_record": {
+        "name": "ODC-BY",
+        "url": "https://api.openaq.org/v3/licenses/10",
+        "redistribution": true,
+        "modification": true,
+        "commercial_use": true,
+        "attribution": true,
+        "share_alike": false
+      },
+      "sensors": [
+        {
+          "id": "1300119",
+          "parameter": "pm25",
+          "name_as_found": "pm25",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "6418",
+          "parameter": null,
+          "name_as_found": "no2",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "6422",
+          "parameter": null,
+          "name_as_found": "pm10",
+          "unit_as_found": "µg/m³"
+        }
+      ],
+      "seconds_between_rows": 3600,
+      "first_reading": "2016-11-21T11:00:00Z",
+      "dates_with_no_file": {
+        "location": [
+          "2025-05-03",
+          "2026-08-15",
+          "2026-08-16",
+          "2026-08-17",
+          "2026-08-18",
+          "2026-08-19",
+          "2026-08-20",
+          "2026-08-21",
+          "2026-08-22",
+          "2026-08-23",
+          "2026-09-12",
+          "2026-09-13",
+          "2026-09-19",
+          "2026-09-27"
+        ]
+      }
+    },
+    {
+      "id": "4520",
+      "name": "Belgradplatz",
+      "city": "Wien",
+      "timezone": "Europe/Vienna",
+      "latitude": 48.174352999912685,
+      "longitude": 16.361417000032255,
+      "provider": "EEA",
+      "licence_in_source_record": {
+        "name": "ODC-BY",
+        "url": "https://api.openaq.org/v3/licenses/10",
+        "redistribution": true,
+        "modification": true,
+        "commercial_use": true,
+        "attribution": true,
+        "share_alike": false
+      },
+      "sensors": [
+        {
+          "id": "5078429",
+          "parameter": "pm25",
+          "name_as_found": "pm25",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "5078451",
+          "parameter": null,
+          "name_as_found": "no2",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "5078977",
+          "parameter": null,
+          "name_as_found": "pm10",
+          "unit_as_found": "µg/m³"
+        }
+      ],
+      "seconds_between_rows": 3600,
+      "first_reading": "2023-05-06T00:00:00Z",
+      "dates_with_no_file": {
+        "location": [
+          "2025-04-18",
+          "2025-04-19",
+          "2025-04-20",
+          "2025-04-21",
+          "2025-05-03",
+          "2025-10-07",
+          "2025-10-08",
+          "2025-10-09",
+          "2025-10-10",
+          "2025-10-11",
+          "2025-10-12",
+          "2025-10-13",
+          "2025-10-14",
+          "2025-10-15",
+          "2025-10-16",
+          "2025-10-17",
+          "2025-10-18",
+          "2026-09-22",
+          "2026-09-23",
+          "2026-09-24",
+          "2026-09-25",
+          "2026-09-26",
+          "2026-09-27",
+          "2026-09-28",
+          "2026-09-29",
+          "2026-09-30"
+        ]
+      }
+    },
+    {
+      "id": "4563",
+      "name": "Gaudenzdorf",
+      "city": "Wien",
+      "timezone": "Europe/Vienna",
+      "latitude": 48.18714700005597,
+      "longitude": 16.33933099979564,
+      "provider": "EEA",
+      "licence_in_source_record": {
+        "name": "ODC-BY",
+        "url": "https://api.openaq.org/v3/licenses/10",
+        "redistribution": true,
+        "modification": true,
+        "commercial_use": true,
+        "attribution": true,
+        "share_alike": false
+      },
+      "sensors": [
+        {
+          "id": "11312",
+          "parameter": null,
+          "name_as_found": "no2",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "11313",
+          "parameter": null,
+          "name_as_found": "pm10",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "30215",
+          "parameter": "pm25",
+          "name_as_found": "pm25",
+          "unit_as_found": "µg/m³"
+        }
+      ],
+      "seconds_between_rows": 3600,
+      "first_reading": "2017-02-18T07:00:00Z",
+      "dates_with_no_file": {
+        "location": [
+          "2025-04-18",
+          "2025-04-19",
+          "2025-04-20",
+          "2025-04-21",
+          "2025-05-03",
+          "2025-10-07",
+          "2025-10-08",
+          "2025-10-09",
+          "2025-10-10",
+          "2025-10-11",
+          "2025-10-12",
+          "2025-10-13",
+          "2025-10-14",
+          "2025-10-15",
+          "2025-10-16",
+          "2025-10-17",
+          "2025-10-18",
+          "2026-09-21",
+          "2026-09-22",
+          "2026-09-23",
+          "2026-09-24",
+          "2026-09-25",
+          "2026-09-26",
+          "2026-09-27",
+          "2026-09-28",
+          "2026-09-29",
+          "2026-09-30"
+        ]
+      }
+    },
+    {
+      "id": "4762",
+      "name": "Berlin Schildhornstraße",
+      "city": "Berlin",
+      "timezone": "Europe/Berlin",
+      "latitude": 52.463610999810946,
+      "longitude": 13.318250000381642,
+      "provider": "EEA",
+      "licence_in_source_record": {
+        "name": "ODC-BY",
+        "url": "https://api.openaq.org/v3/licenses/10",
+        "redistribution": true,
+        "modification": true,
+        "commercial_use": true,
+        "attribution": true,
+        "share_alike": false
+      },
+      "sensors": [
+        {
+          "id": "11989",
+          "parameter": null,
+          "name_as_found": "pm10",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "11990",
+          "parameter": null,
+          "name_as_found": "no2",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "11991",
+          "parameter": null,
+          "name_as_found": "co",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "1300114",
+          "parameter": "pm25",
+          "name_as_found": "pm25",
+          "unit_as_found": "µg/m³"
+        }
+      ],
+      "seconds_between_rows": 3600,
+      "first_reading": "2016-11-21T11:00:00Z",
+      "dates_with_no_file": {
+        "location": [
+          "2025-05-03",
+          "2026-06-29",
+          "2026-08-15",
+          "2026-08-16",
+          "2026-08-17",
+          "2026-08-18",
+          "2026-08-19",
+          "2026-08-20",
+          "2026-08-21",
+          "2026-08-22",
+          "2026-08-23",
+          "2026-09-12",
+          "2026-09-13",
+          "2026-09-19"
+        ]
+      }
+    },
+    {
+      "id": "4767",
+      "name": "Berlin Frankfurter Allee",
+      "city": "Berlin",
+      "timezone": "Europe/Berlin",
+      "latitude": 52.51407199975142,
+      "longitude": 13.469930999635912,
+      "provider": "EEA",
+      "licence_in_source_record": {
+        "name": "ODC-BY",
+        "url": "https://api.openaq.org/v3/licenses/10",
+        "redistribution": true,
+        "modification": true,
+        "commercial_use": true,
+        "attribution": true,
+        "share_alike": false
+      },
+      "sensors": [
+        {
+          "id": "12000",
+          "parameter": null,
+          "name_as_found": "pm10",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "12001",
+          "parameter": null,
+          "name_as_found": "no2",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "12002",
+          "parameter": null,
+          "name_as_found": "co",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "1300111",
+          "parameter": "pm25",
+          "name_as_found": "pm25",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "23674",
+          "parameter": null,
+          "name_as_found": "o3",
+          "unit_as_found": "µg/m³"
+        }
+      ],
+      "seconds_between_rows": 3600,
+      "first_reading": "2016-11-21T11:00:00Z",
+      "dates_with_no_file": {
+        "location": [
+          "2025-05-03",
+          "2026-06-29",
+          "2026-08-15",
+          "2026-08-16",
+          "2026-08-17",
+          "2026-08-18",
+          "2026-08-19",
+          "2026-08-20",
+          "2026-08-21",
+          "2026-08-22",
+          "2026-08-23",
+          "2026-09-12",
+          "2026-09-13",
+          "2026-09-19"
+        ]
+      }
+    },
+    {
+      "id": "2876226",
+      "name": "Liesing - Carlberger-Gasse Gewerbegebiet",
+      "city": "Wien",
+      "timezone": "Europe/Vienna",
+      "latitude": 48.141250000138086,
+      "longitude": 16.300082999567955,
+      "provider": "EEA",
+      "licence_in_source_record": {
+        "name": "ODC-BY",
+        "url": "https://api.openaq.org/v3/licenses/10",
+        "redistribution": true,
+        "modification": true,
+        "commercial_use": true,
+        "attribution": true,
+        "share_alike": false
+      },
+      "sensors": [
+        {
+          "id": "9440295",
+          "parameter": null,
+          "name_as_found": "o3",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "9440301",
+          "parameter": null,
+          "name_as_found": "no2",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "9440302",
+          "parameter": null,
+          "name_as_found": "pm10",
+          "unit_as_found": "µg/m³"
+        },
+        {
+          "id": "9440303",
+          "parameter": "pm25",
+          "name_as_found": "pm25",
+          "unit_as_found": "µg/m³"
+        }
+      ],
+      "seconds_between_rows": 3600,
+      "first_reading": "2024-05-28T23:00:00Z",
+      "dates_with_no_file": {
+        "location": [
+          "2025-04-18",
+          "2025-04-19",
+          "2025-04-20",
+          "2025-04-21",
+          "2025-05-03",
+          "2025-10-07",
+          "2025-10-08",
+          "2025-10-09",
+          "2025-10-10",
+          "2025-10-11",
+          "2025-10-12",
+          "2025-10-13",
+          "2025-10-14",
+          "2025-10-15",
+          "2025-10-16",
+          "2025-10-17",
+          "2025-10-18",
+          "2026-09-21",
+          "2026-09-22",
+          "2026-09-23",
+          "2026-09-24",
+          "2026-09-25",
+          "2026-09-26",
+          "2026-09-27",
+          "2026-09-28",
+          "2026-09-29",
+          "2026-09-30"
+        ]
+      }
+    }
+  ]
+}
