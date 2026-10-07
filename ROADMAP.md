@@ -35,7 +35,8 @@ flowchart LR
   t0_5b["0.5b openSenseMap check"]
   t0_6["0.6 Vocabulary check"]
   t0_7["0.7 City candidates"]
-  t0_8["0.8 Source manifests"]
+  t0_8a["0.8a Manifest format and OpenAQ manifest"]
+  t0_8b["0.8b openSenseMap manifest"]
   t0_1 --> t0_2
   oF --> t0_2
   t0_1 --> t0_4
@@ -47,16 +48,17 @@ flowchart LR
   t0_5b --> t0_7
   oA --> t0_7
   t0_7 --> oB
-  t0_7 --> t0_8
-  oB --> t0_8
+  t0_7 --> t0_8a
+  oB --> t0_8a
+  t0_8a --> t0_8b
 ```
 
-**Order of work:** 0.1, then 0.2, 0.4, 0.5, 0.5b and 0.6 side by side, then 0.3 and 0.7, then 0.8.
+**Order of work:** 0.1, then 0.2, 0.4, 0.5, 0.5b and 0.6 side by side, then 0.3 and 0.7, then 0.8a, then 0.8b.
 
 - [x] **Owner A: Get an OpenAQ API key.**
   Register at explore.openaq.org. The key stays on your machine and is never committed.
 
-- [ ] **Owner B: Choose two cities.**
+- [x] **Owner B: Choose two cities.**
   Needs: 0.7. Pick from the table that task 0.7 produces.
 
 - [x] **Owner F: Install Docker Desktop.**
@@ -86,8 +88,11 @@ flowchart LR
 - [x] **0.7 City candidates.** A script lists cities where a reference monitor has low-cost sensors within about 1 km, with data from both since January 2025. It also reports whether each monitor measures temperature or humidity.
   Needs: 0.4, 0.5b, Owner A. Done when: the script prints a table of candidates for the owner to choose from.
 
-- [ ] **0.8 Source manifests.** For the chosen stations: ids, sensors and their parameters, unit text as found, timezone, licence and its permissions, gaps, and file hashes.
-  Needs: 0.7, Owner B. Done when: the manifest files are committed and a test validates them.
+- [x] **0.8a Manifest format and OpenAQ manifest.** Task 0.8 was split in two to stay within the size rule. The format of a source manifest and the test that validates one. The manifest of the chosen OpenAQ monitors: ids, sensors and their parameters, unit text as found, timezone, licence and its permissions, the dates with no file and the hash of every file since 1 January 2025.
+  Needs: 0.7, Owner B. Done when: the manifest is committed and a test validates it.
+
+- [ ] **0.8b openSenseMap manifest.** The same for the chosen openSenseMap boxes. Its dates with no file and its file hashes cover January 2025 only, because they need every file downloaded; the backfill (task 1.9) adds the rest.
+  Needs: 0.8a. Done when: the manifest is committed and the same test validates it.
 
 ---
 
@@ -151,10 +156,10 @@ flowchart LR
   SQLite, or DynamoDB Local. Both options are described under "Still to decide" in `plan.md`.
 
 - [ ] **1.1 Source contract.** The YAML format that describes a source (fields, units, time convention, licence, duplicate key, which field is which parameter), its loader, and the OpenAQ contract.
-  Needs: 0.4, 0.8. Done when: tests load the OpenAQ contract and reject a broken one.
+  Needs: 0.4, 0.8a. Done when: tests load the OpenAQ contract and reject a broken one.
 
 - [ ] **1.2 Vocabulary and registry.** The dbt project with two seeds: the parameter vocabulary, holding PM2.5 only, and the registry of stations and sensors built from the manifests.
-  Needs: 0.3, 0.6, 0.8. Done when: dbt loads both seeds and their tests pass.
+  Needs: 0.3, 0.6, 0.8b. Done when: dbt loads both seeds and their tests pass.
 
 - [ ] **1.3 Storage and pointer.** Two small interfaces with local versions: files in a directory, and the pointer that records which version of a file is current and only ever moves forward.
   Needs: Owner C. Done when: tests show a duplicate write is harmless and an older event cannot move the pointer back.
