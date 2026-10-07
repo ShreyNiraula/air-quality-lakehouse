@@ -34,9 +34,9 @@ Two sources state it, and the manifest quotes both with their addresses.
 The licence is PDDL 1.0, read in check 0.5b: everything is allowed and no credit is required.
 
 - **564 sensor files and 87 dates with no file**, for the PM2.5, temperature and humidity sensors of seven boxes in January 2025.
-- **Every box has exactly one sensor of each of the three kinds**, named `PM2.5`, `Temperatur` and `rel. Luftfeuchte`, with the unit texts `µg/m³`, `°C` and `%`. Each box also has a PM10 sensor, and five have a pressure sensor; the manifest lists them with no parameter. The sensors were placed by the rule of check 0.5b, and the names were read by eye.
+- **Every box has exactly one sensor of each of the three kinds**, named `PM2.5`, `Temperatur` and `rel. Luftfeuchte`, with the unit texts `µg/m³`, `°C` and `%`. Each box also has a PM10 sensor, and four have a pressure sensor; the manifest lists them with no parameter. The sensors were placed by the rule of check 0.5b, and the names were read by eye.
 - **Every PM2.5 sensor is an SDS011.** A reading comes about every 125 to 187 seconds, and every 309 seconds from one box.
 - **No box has a file for 23 or 28 January 2025.** The archive has no folder for those two days at all, as check 0.5b found.
-- **One Wien box was silent for 13 days.** `WA_Luftsensor`, the box near monitor 4563, has no file from 12 to 24 January 2025: 17 files in 31 days. Wien has exactly three pairs, and a pair is compared only if it shares 70% of hours.
+- **One Wien box has a long gap.** `WA_Luftsensor`, the box near monitor 4563, has no file from 12 to 24 January 2025: 17 files in 31 days. Wien has exactly three pairs, and a pair is compared only if it shares 70% of hours.
 - **One Berlin box ends early.** `Feinstaub Scharnweber`, near monitor 4767, has no file from 29 to 31 January 2025.
 - **The times in the files are UTC.** The manifest gives each box the timezone of its city, which the daily tables need.
