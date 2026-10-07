@@ -189,10 +189,10 @@ flowchart LR
 - [ ] **1.10 Airflow.** Airflow runs the daily ingestion and the backfill.
   Needs: 1.9. Done when: one command starts Airflow locally and a run adds a new day.
 
-- [ ] **1.11 Raw model.** dbt reads the file versions the pointer names into one long table, with an enforced contract.
-  Needs: 1.2, 1.6, 1.7. Done when: dbt builds the raw table from the test data and its tests pass.
+- [ ] **1.11 Raw model.** dbt reads the file versions the pointer names into one long table, with an enforced contract. The table is incremental: a build reads only the file versions the pointer newly names and replaces the rows of those stations and days.
+  Needs: 1.2, 1.6, 1.7. Done when: dbt builds the raw table from the test data and its tests pass, and a second build after one re-issued file replaces only that station and day.
 
-- [ ] **1.12 Hourly model.** One row per station, parameter and hour. The hour is named by its start, duplicates are resolved, and each hour is marked valid or invalid with a reason.
+- [ ] **1.12 Hourly model.** One row per station, parameter and hour. The hour is named by its start, duplicates are resolved, and each hour is marked valid or invalid with a reason. The table is incremental in the same way: only the hours of the stations and days that changed are replaced.
   Needs: 1.11. Done when: tests cover the end-of-period timestamps, duplicate rows, conflicting rows and out-of-range values.
 
 - [ ] **1.13 Daily model.** One row for every station, parameter and date in its period, with a status: valid, low coverage, or no file. Days follow the station's local time, including days with 23 or 25 hours.
