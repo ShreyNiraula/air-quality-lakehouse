@@ -1,0 +1,45 @@
+# The contract of the OpenAQ archive: what one of its day files looks like and how to read it.
+# Written from check 0.4 (docs/checks/0.4-openaq-file.md) and the manifest of task 0.8a.
+# `src/airquality/contracts.py` loads this file and refuses it if an entry is missing or wrong.
+
+source: openaq   # the same as this file's name
+title: OpenAQ archive of reference monitors
+
+file:
+  format: csv.gz
+  # The header line, in this order. The archive writes each name in double quotes.
+  fields: [location_id, sensors_id, location, datetime, lat, lon, parameter, units, value]
+
+# Which field holds what. A file has one row per reading, for every sensor of one station.
+roles:
+  station: location_id
+  sensor: sensors_id
+  time: datetime
+  parameter: parameter
+  unit: units
+  value: value
+
+time:
+  marks: end      # a timestamp names the end of its period: 03:00 means 02:00 to 02:59
+  seconds: 3600   # the length of the period
+
+# Two rows that agree in these fields are the same reading.
+duplicate_key: [sensors_id, datetime]
+
+# For each parameter of the vocabulary that this source delivers: what the source calls it,
+# and every spelling of its unit, as the source writes it. Rows of other parameters are not read.
+parameters:
+  pm25:
+    name: pm25
+    units: ["µg/m³"]
+
+# As the manifest records it (manifests/README.md). A test holds the two together.
+licence:
+  name: ODC-BY 1.0 in OpenAQ's record; CC-BY in the EEA's legal notice
+  credit: European Environment Agency (EEA), via OpenAQ
+  permissions:
+    redistribution: true
+    modification: true
+    commercial_use: true
+    attribution: true    # required
+    share_alike: false   # not required

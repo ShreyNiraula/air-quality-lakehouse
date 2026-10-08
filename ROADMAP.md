@@ -159,7 +159,7 @@ flowchart LR
 - [x] **Owner C: Decide where the pipeline records which file version is current.**
   Decided on 7 October 2026: SQLite. DynamoDB Local was the other option.
 
-- [ ] **1.1 Source contract.** The YAML format that describes a source (fields, units, time convention, licence, duplicate key, which field is which parameter), its loader, and the OpenAQ contract.
+- [x] **1.1 Source contract.** The YAML format that describes a source (fields, units, time convention, licence, duplicate key, which field is which parameter), its loader, and the OpenAQ contract.
   Needs: 0.4, 0.8a. Done when: tests load the OpenAQ contract and reject a broken one.
 
 - [ ] **1.2 Vocabulary and registry.** The dbt project with two seeds: the parameter vocabulary, holding PM2.5 only, and the registry of stations and sensors built from the manifests.

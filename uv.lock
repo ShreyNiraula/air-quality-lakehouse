@@ -28,6 +28,7 @@ dependencies = [
     { name = "dbt-core" },
     { name = "dbt-duckdb" },
     { name = "duckdb" },
+    { name = "pyyaml" },
 ]
 
 [package.dev-dependencies]
@@ -41,6 +42,7 @@ requires-dist = [
     { name = "dbt-core", specifier = "==1.12.5" },
     { name = "dbt-duckdb", specifier = "==1.11.0" },
     { name = "duckdb", specifier = "==1.5.6" },
+    { name = "pyyaml", specifier = ">=6" },
 ]
 
 [package.metadata.requires-dev]
