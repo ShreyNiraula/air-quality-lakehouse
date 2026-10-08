@@ -1,0 +1,30 @@
+{
+  "type": "Dataset",
+  "identifier": "openaq",
+  "title": "OpenAQ archive of reference monitors",
+  "publisher": "OpenAQ",
+  "license": "ODC-BY 1.0 in OpenAQ's record; CC-BY in the EEA's legal notice",
+  "rights": "Credit: European Environment Agency (EEA), via OpenAQ",
+  "temporal": {
+    "startDate": "2025-01-01",
+    "endDate": null
+  },
+  "spatial": {
+    "places": [
+      "Berlin"
+    ],
+    "bbox": [
+      13.318250000381642,
+      52.463610999810946,
+      13.469930999635912,
+      52.51407199975142
+    ]
+  },
+  "accrualPeriodicity": "daily",
+  "distribution": [
+    {
+      "downloadURL": "https://openaq-data-archive.s3.amazonaws.com",
+      "format": "csv.gz"
+    }
+  ]
+}

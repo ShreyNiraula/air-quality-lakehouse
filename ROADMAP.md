@@ -180,7 +180,7 @@ flowchart LR
 - [x] **1.7 OpenAQ adapter.** Find and download archive files for a station and day, and a small window of real files committed as test data if the licence allows. The window is January 2025 and January 2026 for the three Berlin monitors, so that a month can be compared with the same month a year earlier on the test data.
   Needs: 1.1. Done when: one command downloads a day for the chosen station, and the test data is in place with its licence noted.
 
-- [ ] **1.8 Source catalog entry.** A catalog file per source, generated from its contract: title, publisher, licence, time range, area, update frequency, download location.
+- [x] **1.8 Source catalog entry.** A catalog file per source, generated from its contract: title, publisher, licence, time range, area, update frequency, download location.
   Needs: 1.1. Done when: one command writes the OpenAQ entry and a test checks it against the contract.
 
 - [ ] **1.9 Backfill.** Load history from 1 January 2025 one file at a time, slowed down to be polite, and able to resume: a file version already validated is skipped.

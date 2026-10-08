@@ -16,6 +16,8 @@ def test_the_openaq_contract_loads_as_check_0_4_found_the_files():
     contract = load("openaq")
     assert ",".join(contract.fields) == openaq_file.EXPECTED_FIELDS
     assert contract.format == "csv.gz"
+    assert (contract.publisher, contract.updates) == ("OpenAQ", "daily")
+    assert contract.download == openaq_file.ARCHIVE
     assert (contract.marks, contract.seconds) == ("end", 3600)
     assert contract.duplicate_key == ("sensors_id", "datetime")
     assert contract.roles["station"] == "location_id" and contract.roles["unit"] == "units"
@@ -49,7 +51,11 @@ def broken(change):
         (lambda d: d.update(colour="blue"), "unknown entry: colour"),
         (lambda d: d.pop("time"), "time: missing"),
         (lambda d: d.update(roles=["datetime"]), "roles: missing, or not a group"),
-        (lambda d: d.update(title=" "), "neither may be empty"),
+        (lambda d: d.update(title=" "), "none may be empty"),
+        (lambda d: d.update(publisher=""), "none may be empty"),
+        (lambda d: d.pop("publisher"), "publisher: missing"),
+        (lambda d: d.update(download="ftp://example.org/files"), "download: must be an address"),
+        (lambda d: d.update(updates="now and then"), "updates: must be one of hourly, daily"),
         (lambda d: d["file"].update(format="xlsx"), "format must be one of"),
         (lambda d: d["file"]["fields"].append("value"), "list of different names"),
         (lambda d: d["file"].pop("fields"), "list of different names"),
