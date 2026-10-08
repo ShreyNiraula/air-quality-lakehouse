@@ -168,7 +168,7 @@ flowchart LR
 - [x] **1.3 Storage and pointer.** Two small interfaces with local versions: files in a directory, and the pointer that records which version of a file is current and only ever moves forward.
   Needs: Owner C. Done when: tests show a duplicate write is harmless and an older event cannot move the pointer back.
 
-- [ ] **1.4 Unit rule.** Unit text is cleaned and must match the parameter's unit or a spelling its source lists.
+- [x] **1.4 Unit rule.** Unit text is cleaned and must match the parameter's unit or a spelling its source lists.
   Needs: 1.1, 1.2. Done when: tests accept `µg/m³`, `μg/m3` and `ug/m3` for PM2.5 and reject any other unit.
 
 - [ ] **1.5 File validation.** Structural checks only: the file opens, the header matches the contract, it has rows, its keys and dates match its name, and its units pass.
