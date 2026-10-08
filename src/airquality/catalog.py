@@ -56,11 +56,16 @@ def text(source: str) -> str:
     return json.dumps(built, indent=2, ensure_ascii=False) + "\n"
 
 
-def main() -> int:
-    OUT.mkdir(parents=True, exist_ok=True)
-    for contract in sorted(CONTRACTS.glob("*.yml")):
-        (OUT / f"{contract.stem}.json").write_text(text(contract.stem), encoding="utf-8")
-        print(f"Wrote {OUT / contract.stem}.json")
+def main(out: Path = OUT) -> int:
+    out.mkdir(parents=True, exist_ok=True)
+    sources = sorted(contract.stem for contract in CONTRACTS.glob("*.yml"))
+    for source in sources:
+        (out / f"{source}.json").write_text(text(source), encoding="utf-8")
+        print(f"Wrote {out / source}.json")
+    # An entry whose contract is gone is removed: the folder holds one entry per source, no more.
+    for left in sorted(set(out.glob("*.json")) - {out / f"{source}.json" for source in sources}):
+        left.unlink()
+        print(f"Removed {left}, which has no contract")
     return 0
 
 

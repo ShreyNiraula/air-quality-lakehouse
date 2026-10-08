@@ -56,3 +56,12 @@ def test_a_source_with_no_station_in_the_registry_has_no_entry():
     assert catalog.registered("elsewhere") == []
     with pytest.raises(ValueError, match="openaq: the registry has no station of this source"):
         catalog.entry(OPENAQ, [])
+
+
+def test_the_command_writes_every_entry_and_removes_one_whose_contract_is_gone(tmp_path, capsys):
+    (tmp_path / "gone.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "notes.md").write_text("kept: not an entry", encoding="utf-8")
+    assert catalog.main(tmp_path) == 0
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["notes.md", "openaq.json"]
+    assert (tmp_path / "openaq.json").read_text(encoding="utf-8") == catalog.text("openaq")
+    assert "gone.json, which has no contract" in capsys.readouterr().out
