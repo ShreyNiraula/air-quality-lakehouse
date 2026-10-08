@@ -210,7 +210,7 @@ flowchart LR
 - [ ] **1.16 Gate tests.** The models are built in a staging area. Two tests guard publishing: every date has a row, and no day that was valid in the published tables becomes invalid unless it is on the acknowledged list.
   Needs: 1.14, 1.15b. Done when: a good build passes, and a build from a truncated file fails on the retained-days test alone.
 
-- [ ] **1.17 Promotion.** A fully passing build is copied to the published Iceberg tables in one transaction, and a row is added to the release log with each table's snapshot id. A failed build publishes nothing.
+- [ ] **1.17 Promotion.** A fully passing build is copied to the published Iceberg tables in one transaction, and a row is added to the release log with each table's snapshot id. The published observation table is one table for all sources, partitioned by source and month. A failed build publishes nothing.
   Needs: 1.16. Done when: tests show every published table changes in the same release or none does, the release log names each table's snapshot, and a failure injected in the middle of promotion leaves the published tables unchanged.
 
 - [ ] **1.18 Gate demo.** A script publishes a good release, delivers a re-issued file that is valid but holds 6 of 24 hours, and shows the gate blocking it. Delivering the complete file again publishes the next release.
@@ -305,10 +305,10 @@ flowchart LR
 - [ ] **2.10 Data health.** Gaps, stuck values and late deliveries for each station and sensor.
   Needs: 2.6. Done when: tests detect each of the three on test data built to contain it.
 
-- [ ] **2.11 Dashboard and map.** The dashboard starts with one command and shows the station map for both cities.
+- [ ] **2.11 Dashboard and map.** The dashboard starts with one command and shows the station map for both cities. Every view of the dashboard carries one sentence saying what it shows and how to read it, a finding in plain words above its chart, and short definitions of the terms it uses.
   Needs: 2.6, Owner D. Done when: the command opens the dashboard and the map shows every registered station.
 
-- [ ] **2.12 Exceedance view.** Days above the WHO value by month and year, for both cities.
+- [ ] **2.12 Exceedance view.** Days above the WHO value by month and year, for both cities, shown as a share of the valid days with the count beside it.
   Needs: 2.11. Done when: the view matches the script from task 1.19.
 
 - [ ] **2.13 Sensor versus monitor view.** Disagreement by pair, and against humidity and temperature.
@@ -395,6 +395,7 @@ flowchart LR
   t4_9["4.9 Known-answer tests"]
   t4_10["4.10 Hostile and out-of-scope tests"]
   t4_11["4.11 Test table and README"]
+  t4_12["4.12 Chat results on the dashboard"]
   t4_2 --> t4_3
   t4_2 --> t4_4
   t4_2 --> t4_5
@@ -409,9 +410,10 @@ flowchart LR
   t4_8 --> t4_9
   t4_9 --> t4_10
   t4_10 --> t4_11
+  t4_11 --> t4_12
 ```
 
-**Order of work:** 4.1 and 4.2 side by side. Then the five tools, 4.3 to 4.7, side by side. Then 4.8, 4.9, 4.10 and 4.11 one after another.
+**Order of work:** 4.1 and 4.2 side by side. Then the five tools, 4.3 to 4.7, side by side. Then 4.8, 4.9, 4.10, 4.11 and 4.12 one after another.
 
 - [ ] **4.1 Local model check.** The chosen local model returns valid tool arguments in at least 8 of 10 trial calls, and its licence is read.
   Needs: 3.7. Done when: a script prints the count and the licence is recorded.
@@ -445,6 +447,9 @@ flowchart LR
 
 - [ ] **4.11 Test table and README.** The pass counts in the README with the limits of what they show. The gate demo also checks that the agent's answer does not change when a bad file is blocked.
   Needs: 4.10. Done when: the table is produced by a script, not written by hand.
+
+- [ ] **4.12 Chat results on the dashboard.** Added on 7 October 2026 at the owner's request. An answer from the agent can be shown as a new section on the dashboard page: a table or a chart drawn from the tool's result. A section can be deleted, lasts for the session, and is kept only if the user chooses to keep it.
+  Needs: 2.11, 4.11. Done when: asking an example question adds a section whose numbers equal the tool's result, and deleting the section removes it.
 
 ---
 
