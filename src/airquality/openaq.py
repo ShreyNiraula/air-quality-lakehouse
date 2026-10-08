@@ -11,6 +11,7 @@ test data is January 2025 and January 2026 of the three Berlin monitors, in `tes
 import argparse
 import calendar
 import hashlib
+import re
 import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -22,6 +23,7 @@ from airquality.checks.city_candidates import fetch  # waits between requests; n
 from airquality.checks.openaq_file import ARCHIVE, S3
 
 FIXTURES = Path(__file__).parents[2] / "tests" / "fixtures" / "openaq"
+NAME = re.compile(r"location-(?P<station>\d+)-(?P<day>\d{8})\.csv\.gz")
 WINDOW = (date(2025, 1, 1), date(2026, 1, 1))  # the months of the test data, by their first day
 
 
@@ -39,6 +41,14 @@ def key(station: str, day: date) -> str:
     """Where the archive keeps the file of a station and day."""
     folder = f"records/csv.gz/locationid={station}/year={day.year}/month={day.month:02d}"
     return f"{folder}/location-{station}-{day:%Y%m%d}.csv.gz"
+
+
+def named(key: str) -> tuple[str, date]:
+    """The station and the day that a file's key names. Raises ValueError for any other key."""
+    name = NAME.fullmatch(key.rsplit("/", 1)[-1])
+    if not name:
+        raise ValueError(f"not the key of an OpenAQ day file: {key!r}")
+    return name["station"], datetime.strptime(name["day"], "%Y%m%d").date()
 
 
 def days(month: date) -> list[date]:

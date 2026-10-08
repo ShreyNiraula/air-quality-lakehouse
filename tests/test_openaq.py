@@ -40,6 +40,19 @@ def test_the_key_of_a_station_and_day():
     assert openaq.key("4762", date(2026, 12, 9)).endswith("/month=12/location-4762-20261209.csv.gz")
 
 
+def test_a_key_names_its_station_and_day():
+    assert openaq.named(DAY) == ("3019", date(2025, 1, 1))
+    assert openaq.named("landing/openaq/location-4762-20261209.csv.gz") == (
+        "4762",
+        date(2026, 12, 9),
+    )
+    for other in ("location-3019-20250101.csv", "location-x-20250101.csv.gz", DAY + ".tmp", ""):
+        with pytest.raises(ValueError, match="not the key of an OpenAQ day file"):
+            openaq.named(other)
+    with pytest.raises(ValueError):
+        openaq.named("location-3019-20251345.csv.gz")
+
+
 def test_find_lists_the_days_of_the_month_that_have_a_file(archive):
     asked, answers = archive
     other = DAY.replace("20250101", "20250103")

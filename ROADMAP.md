@@ -171,7 +171,7 @@ flowchart LR
 - [x] **1.4 Unit rule.** Unit text is cleaned and must match the parameter's unit or a spelling its source lists.
   Needs: 1.1, 1.2. Done when: tests accept `µg/m³`, `μg/m3` and `ug/m3` for PM2.5 and reject any other unit.
 
-- [ ] **1.5 File validation.** Structural checks only: the file opens, the header matches the contract, it has rows, its keys and dates match its name, and its units pass.
+- [x] **1.5 File validation.** Structural checks only: the file opens, the header matches the contract, it has rows, its keys and dates match its name, and its units pass.
   Needs: 1.4, 1.7. Done when: tests accept a real file from the test data and a short day, and reject each kind of broken file with a reason.
 
 - [ ] **1.6 Ingest function.** Read a delivered file, validate it, store it as validated or quarantined under its content hash, then move the pointer.
