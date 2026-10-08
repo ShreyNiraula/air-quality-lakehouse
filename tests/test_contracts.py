@@ -83,6 +83,28 @@ def test_each_kind_of_broken_contract_is_named(change, problem):
     assert (found == []) if problem is None else any(problem in line for line in found), found
 
 
+def test_one_problem_does_not_hide_another():
+    def change(d):
+        d.pop("time")
+        d.update(roles=["datetime"], colour="blue")
+        d["file"].update(format="xlsx")
+        d["duplicate_key"].append("sensor")
+        d["parameters"]["pm25"].update(name=False, units=[])
+        d["licence"].update(credit="")
+
+    found = broken(change)
+    assert [line.split(":")[0] for line in found] == [
+        *("unknown entry", "roles", "time", "file", "duplicate_key"),
+        *("parameters", "parameters", "licence"),
+    ], found
+
+
+def test_a_wrong_list_of_fields_is_one_problem_not_three():
+    assert broken(lambda d: d["file"].update(fields="datetime")) == [
+        "file: fields must be a list of different names"
+    ]
+
+
 def test_a_contract_that_is_not_a_group_of_entries_is_refused():
     assert validate(["source", "openaq"]) == ["a contract is a group of named entries"]
 
@@ -95,8 +117,12 @@ def test_a_contract_that_is_not_a_group_of_entries_is_refused():
         (TEXT.replace("    name: pm25", "    name: no"), "needs its name as text"),
         (TEXT.replace("marks: end", "marks: [end"), "not YAML"),
         (TEXT.replace("seconds: 3600", "seconds: 0") + "colour: blue\n", "colour; time: seconds"),
+        (
+            TEXT.replace("source: openaq", "source: openaqi") + "title: Another\ntime: 3600\n",
+            "twice: time; an entry is written twice: title; time: missing.*; source: says openaqi",
+        ),
     ],
-    ids=["another source", "an entry twice", "a bare no", "not YAML", "two problems"],
+    ids=["another source", "an entry twice", "a bare no", "not YAML", "two problems", "four"],
 )
 def test_a_broken_file_is_refused_with_its_source_and_every_problem(text, problem):
     assert text != TEXT

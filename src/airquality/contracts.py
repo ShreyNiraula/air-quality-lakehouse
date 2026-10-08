@@ -58,12 +58,15 @@ class Contract:
 
 
 class _NoRepeats(yaml.SafeLoader):
-    """YAML keeps the last of two entries with one name and says nothing. Here it is an error."""
+    """YAML keeps the last of two entries with one name and says nothing. This loader notes them."""
+
+    def __init__(self, stream):
+        super().__init__(stream)
+        self.repeated: list[str] = []
 
     def construct_mapping(self, node, deep=False):
         names = [self.construct_object(key, deep=True) for key, _ in node.value]
-        if repeated := sorted({str(name) for name in names if names.count(name) > 1}):
-            raise ContractError(f"an entry is written twice: {', '.join(repeated)}")
+        self.repeated += sorted({str(name) for name in names if names.count(name) > 1})
         return super().construct_mapping(node, deep)
 
 
@@ -78,77 +81,95 @@ def texts(value: object) -> bool:
 
 
 def validate(document: object) -> list[str]:
-    """Everything that is wrong with a contract; nothing if it is sound."""
+    """Everything that is wrong with a contract; nothing if it is sound.
+
+    An entry that is missing or of the wrong kind is named, and the other entries are still
+    checked, so one problem does not hide another.
+    """
     if not isinstance(document, dict):
         return ["a contract is a group of named entries"]
     problems = [f"unknown entry: {name}" for name in document if name not in ENTRIES]
-    unusable = [
-        f"{name}: missing, or not a {KINDS[kind]}"
-        for name, kind in ENTRIES.items()
-        if not isinstance(document.get(name), kind)
-    ]
-    if unusable:
-        return problems + unusable  # everything below reads these entries
-    if not (document["source"].strip() and document["title"].strip()):
+    usable = {}  # the entries that can be read; each of the others gets its one line here
+    for name, kind in ENTRIES.items():
+        if isinstance(document.get(name), kind):
+            usable[name] = document[name]
+        else:
+            problems.append(f"{name}: missing, or not a {KINDS[kind]}")
+    if not all(usable.get(name, "unusable").strip() for name in ("source", "title")):
         problems.append("source and title: neither may be empty")
-    file, fields = document["file"], document["file"].get("fields")
-    if file.get("format") not in FORMATS:
-        problems.append(f"file: format must be one of {', '.join(FORMATS)}")
-    if not texts(fields):
-        problems.append("file: fields must be a list of different names")
-        fields = []
-    roles = document["roles"]
-    if sorted(roles, key=str) != sorted(ROLES) or not all(
-        role in fields for role in roles.values()
-    ):
+    fields = usable.get("file", {}).get("fields")
+    if "file" in usable:
+        if usable["file"].get("format") not in FORMATS:
+            problems.append(f"file: format must be one of {', '.join(FORMATS)}")
+        if not texts(fields):
+            problems.append("file: fields must be a list of different names")
+
+    def named(names) -> bool:
+        """Whether each is a field of the file. Not asked while the fields themselves are wrong."""
+        return not texts(fields) or all(name in fields for name in names)
+
+    roles = usable.get("roles")
+    if roles is not None and (sorted(roles, key=str) != sorted(ROLES) or not named(roles.values())):
         problems.append(f"roles: each of {', '.join(ROLES)} must name one of the file's fields")
-    time = document["time"]
-    if time.get("marks") not in MARKS:
-        problems.append("time: marks must be start or end")
-    if type(time.get("seconds")) is not int or time["seconds"] <= 0:
-        problems.append("time: seconds must be a whole number above zero")
-    key = document["duplicate_key"]
-    if not texts(key) or not all(field in fields for field in key):
+    if "time" in usable:
+        time = usable["time"]
+        if time.get("marks") not in MARKS:
+            problems.append("time: marks must be start or end")
+        if type(time.get("seconds")) is not int or time["seconds"] <= 0:
+            problems.append("time: seconds must be a whole number above zero")
+    key = usable.get("duplicate_key")
+    if key is not None and not (texts(key) and named(key)):
         problems.append("duplicate_key: must be a list of the file's fields, each one once")
-    parameters = document["parameters"]
-    if not parameters:
-        problems.append("parameters: the source must deliver at least one")
+    if "parameters" in usable:
+        problems += _parameters(usable["parameters"])
+    if "licence" in usable:
+        licence = usable["licence"]
+        allowed = licence.get("permissions")
+        if not all(
+            isinstance(licence.get(k), str) and licence[k].strip() for k in ("name", "credit")
+        ):
+            problems.append("licence: the name or the credit line is missing")
+        if (
+            not isinstance(allowed, dict)
+            or sorted(allowed, key=str) != sorted(PERMISSIONS)
+            or {type(value) for value in allowed.values()} != {bool}
+        ):
+            problems.append("licence: the five permissions must each be true or false")
+    return problems
+
+
+def _parameters(parameters: dict) -> list[str]:
+    problems = [] if parameters else ["parameters: the source must deliver at least one"]
     called = []
     for parameter, entry in parameters.items():
-        name = entry.get("name") if isinstance(entry, dict) else None
-        called.append(name)
+        entry = entry if isinstance(entry, dict) else {}
+        name = entry.get("name")
         if not (isinstance(parameter, str) and isinstance(name, str) and name.strip()):
             # YAML reads a bare `no`, `on` or `yes` as true or false, and `no` is a pollutant.
             problems.append(f"parameters: {parameter} needs its name as text, in quotes if need be")
-        elif not texts(entry.get("units")):
+        else:
+            called.append(name)
+        if not texts(entry.get("units")):
             problems.append(f"parameters: {parameter} needs a list of its unit spellings")
-    called = [name for name in called if isinstance(name, str)]
     if len(set(called)) != len(called):
         problems.append("parameters: two of them have the same name in the source")
-    licence = document["licence"]
-    allowed = licence.get("permissions")
-    if not all(isinstance(licence.get(k), str) and licence[k].strip() for k in ("name", "credit")):
-        problems.append("licence: the name or the credit line is missing")
-    if (
-        not isinstance(allowed, dict)
-        or sorted(allowed, key=str) != sorted(PERMISSIONS)
-        or {type(value) for value in allowed.values()} != {bool}
-    ):
-        problems.append("licence: the five permissions must each be true or false")
     return problems
 
 
 def parse(text: str, source: str) -> Contract:
     """The contract written in `text`, which must be the contract of `source`."""
+    loader = _NoRepeats(text)
     try:
-        document = yaml.load(text, Loader=_NoRepeats)  # a SafeLoader
-    except yaml.YAMLError as error:
+        document = loader.get_single_data()
+    except yaml.YAMLError as error:  # nothing can be checked in a text that cannot be read
         raise ContractError(f"{source}: not YAML: {error}") from error
-    except ContractError as error:
-        raise ContractError(f"{source}: {error}") from error
-    problems = validate(document)
-    if not problems and document["source"] != source:
-        problems.append(f"source: says {document['source']}, and the file is {source}.yml")
+    finally:
+        loader.dispose()
+    problems = [f"an entry is written twice: {name}" for name in loader.repeated]
+    problems += validate(document)
+    stated = document.get("source") if isinstance(document, dict) else None
+    if isinstance(stated, str) and stated != source:
+        problems.append(f"source: says {stated}, and the file is {source}.yml")
     if problems:
         raise ContractError(f"{source}: " + "; ".join(problems))
     return Contract(
