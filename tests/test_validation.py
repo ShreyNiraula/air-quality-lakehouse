@@ -63,7 +63,7 @@ def changed(old: str, new: str, rows: list[str] = LINES[1:]) -> bytes:
         (packed([*LINES[:-1], LINES[-1][:-1]]), ["the file does not open: unexpected end of data"]),
         (
             packed([*LINES[:5], LINES[5][:-1], *LINES[6:]]),
-            ["the file does not open: unexpected end"],
+            ["the file does not open: ',' expected after"],
         ),
         (changed('"pm25"', '"pm25"x'), ["the file does not open: ',' expected after '\"'"]),
         (packed(LINES[:1]), ["the file has a header and no rows"]),
