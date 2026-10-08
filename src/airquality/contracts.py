@@ -2,7 +2,8 @@
 
 A contract is one YAML file per source in `contracts/`. It says what a delivered file looks like
 and how to read it: its fields, which field holds what, the time convention, the duplicate key,
-what the source calls each parameter and how it spells the unit, and the licence.
+what the source calls each parameter and how it spells the unit, and the licence. It also says
+who publishes the source, where it is downloaded and how often it adds data (task 1.8).
 `contracts/openaq.yml` is the first one, and its comments explain each entry.
 
     from airquality.contracts import load
@@ -20,6 +21,9 @@ CONTRACTS = Path(__file__).parents[2] / "contracts"
 ENTRIES = {
     "source": str,
     "title": str,
+    "publisher": str,
+    "download": str,
+    "updates": str,
     "file": dict,
     "roles": dict,
     "time": dict,
@@ -30,6 +34,7 @@ ENTRIES = {
 FORMATS = ("csv", "csv.gz")
 ROLES = ("station", "sensor", "time", "parameter", "unit", "value")
 MARKS = ("start", "end")  # which end of its period a timestamp names
+UPDATES = ("hourly", "daily")  # how often the source adds data
 KINDS = {str: "text", dict: "group of named entries", list: "list"}
 
 
@@ -47,6 +52,9 @@ class Parameter:
 class Contract:
     source: str
     title: str
+    publisher: str  # who makes the files available
+    download: str  # the address the files are downloaded from
+    updates: str  # one of UPDATES
     format: str
     fields: tuple[str, ...]  # the header line, in order
     roles: dict[str, str]  # each of ROLES, and the field that holds it
@@ -95,8 +103,12 @@ def validate(document: object) -> list[str]:
             usable[name] = document[name]
         else:
             problems.append(f"{name}: missing, or not a {KINDS[kind]}")
-    if not all(usable.get(name, "unusable").strip() for name in ("source", "title")):
-        problems.append("source and title: neither may be empty")
+    if not all(usable.get(name, "unusable").strip() for name in ("source", "title", "publisher")):
+        problems.append("source, title and publisher: none may be empty")
+    if not usable.get("download", "https://unusable").startswith("https://"):
+        problems.append("download: must be an address that starts with https://")
+    if usable.get("updates", UPDATES[0]) not in UPDATES:
+        problems.append(f"updates: must be one of {', '.join(UPDATES)}")
     fields = usable.get("file", {}).get("fields")
     if "file" in usable:
         if usable["file"].get("format") not in FORMATS:
@@ -179,6 +191,9 @@ def parse(text: str, source: str) -> Contract:
     return Contract(
         source=source,
         title=document["title"],
+        publisher=document["publisher"],
+        download=document["download"],
+        updates=document["updates"],
         format=document["file"]["format"],
         fields=tuple(document["file"]["fields"]),
         roles=dict(document["roles"]),

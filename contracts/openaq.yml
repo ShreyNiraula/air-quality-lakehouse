@@ -4,6 +4,9 @@
 
 source: openaq   # the same as this file's name
 title: OpenAQ archive of reference monitors
+publisher: OpenAQ   # who makes the files available; who measured is each station's provider
+download: https://openaq-data-archive.s3.amazonaws.com
+updates: daily      # one file per station and day, written about three days after the day ends
 
 file:
   format: csv.gz
