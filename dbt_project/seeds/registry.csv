@@ -1,0 +1,4 @@
+source,station_id,station_name,city,latitude,longitude,timezone,provider,licence,credit,sensor_id,parameter,start_date
+openaq,3019,Berlin Mitte,Berlin,52.51360600001067,13.41883300000022,Europe/Berlin,EEA,ODC-BY 1.0 in OpenAQ's record; CC-BY in the EEA's legal notice,"European Environment Agency (EEA), via OpenAQ",1300119,pm25,2025-01-01
+openaq,4762,Berlin Schildhornstraße,Berlin,52.463610999810946,13.318250000381642,Europe/Berlin,EEA,ODC-BY 1.0 in OpenAQ's record; CC-BY in the EEA's legal notice,"European Environment Agency (EEA), via OpenAQ",1300114,pm25,2025-01-01
+openaq,4767,Berlin Frankfurter Allee,Berlin,52.51407199975142,13.469930999635912,Europe/Berlin,EEA,ODC-BY 1.0 in OpenAQ's record; CC-BY in the EEA's legal notice,"European Environment Agency (EEA), via OpenAQ",1300111,pm25,2025-01-01
