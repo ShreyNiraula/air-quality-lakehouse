@@ -165,7 +165,7 @@ flowchart LR
 - [x] **1.2 Vocabulary and registry.** The dbt project with two seeds: the parameter vocabulary, holding PM2.5 only, and the registry of stations and sensors built from the manifests.
   Needs: 0.3, 0.6, 0.8b. Done when: dbt loads both seeds and their tests pass.
 
-- [ ] **1.3 Storage and pointer.** Two small interfaces with local versions: files in a directory, and the pointer that records which version of a file is current and only ever moves forward.
+- [x] **1.3 Storage and pointer.** Two small interfaces with local versions: files in a directory, and the pointer that records which version of a file is current and only ever moves forward.
   Needs: Owner C. Done when: tests show a duplicate write is harmless and an older event cannot move the pointer back.
 
 - [ ] **1.4 Unit rule.** Unit text is cleaned and must match the parameter's unit or a spelling its source lists.
