@@ -144,8 +144,12 @@ def _parameters(parameters: dict) -> list[str]:
     for parameter, entry in parameters.items():
         entry = entry if isinstance(entry, dict) else {}
         name = entry.get("name")
-        if not (isinstance(parameter, str) and isinstance(name, str) and name.strip()):
-            # YAML reads a bare `no`, `on` or `yes` as true or false, and `no` is a pollutant.
+        # YAML reads a bare `no`, `on` or `yes` as true or false, and `no` is a pollutant.
+        if not (isinstance(parameter, str) and parameter.strip()):
+            problems.append(
+                f"parameters: {parameter!r} is not a name: write one, in quotes if need be"
+            )
+        if not (isinstance(name, str) and name.strip()):
             problems.append(f"parameters: {parameter} needs its name as text, in quotes if need be")
         else:
             called.append(name)

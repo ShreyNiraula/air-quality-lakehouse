@@ -65,6 +65,8 @@ def broken(change):
         (lambda d: d["duplicate_key"].append("datetime"), "duplicate_key: must be"),
         (lambda d: d["parameters"].clear(), "at least one"),
         (lambda d: d["parameters"].update(pm25="pm25"), "pm25 needs its name as text"),
+        (lambda d: d["parameters"].update({" ": d["parameters"].pop("pm25")}), "' ' is not a name"),
+        (lambda d: d["parameters"].update({False: d["parameters"].pop("pm25")}), "False is not a"),
         (lambda d: d["parameters"]["pm25"].update(name=False), "pm25 needs its name as text"),
         (lambda d: d["parameters"]["pm25"].update(units=[]), "pm25 needs a list of its unit"),
         (lambda d: d["parameters"]["pm25"].update(units="µg/m³"), "pm25 needs a list of its unit"),
