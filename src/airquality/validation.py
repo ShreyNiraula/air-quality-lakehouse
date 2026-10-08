@@ -22,7 +22,9 @@ def rows_of(content: bytes, contract: Contract) -> list[list[str]]:
     """The file as rows of texts, the header first. Raises ValueError if it does not open."""
     try:
         raw = gzip.decompress(content) if contract.format.endswith(".gz") else content
-        return [row for row in csv.reader(io.StringIO(raw.decode("utf-8"), newline="")) if row]
+        # Strict: without it a quote that is never closed takes the rest of the file as one field.
+        text = io.StringIO(raw.decode("utf-8"), newline="")
+        return [row for row in csv.reader(text, strict=True) if row]
     except (OSError, EOFError, zlib.error, UnicodeDecodeError, csv.Error) as error:
         raise ValueError(f"the file does not open: {error}") from error
 
