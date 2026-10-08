@@ -98,7 +98,7 @@ flowchart LR
 
 ## Milestone 1: One source, one city, PM2.5 end to end
 
-OpenAQ data for one city goes from download to a published table, and answers question 1: on how many days did PM2.5 exceed the WHO value, and how does that compare with a year earlier.
+OpenAQ data for one city, Berlin, goes from download to a published table, and answers question 1: on how many days did PM2.5 exceed the WHO value, and how does that compare with a year earlier.
 
 **At the end you can show:** one command that runs the pipeline, the answer to question 1, and the gate blocking a bad file while the published tables stay unchanged.
 
@@ -119,7 +119,8 @@ flowchart LR
   t1_12["1.12 Hourly model"]
   t1_13["1.13 Daily model"]
   t1_14["1.14 Exceedance"]
-  t1_15["1.15 Metadata and catalog"]
+  t1_15a["1.15a Station, sensor and datastream tables"]
+  t1_15b["1.15b Observation table and availability catalog"]
   t1_16["1.16 Gate tests"]
   t1_17["1.17 Promotion"]
   t1_18["1.18 Gate demo"]
@@ -128,6 +129,7 @@ flowchart LR
   t1_1 --> t1_4
   t1_2 --> t1_4
   t1_4 --> t1_5
+  t1_7 --> t1_5
   t1_3 --> t1_6
   t1_5 --> t1_6
   t1_1 --> t1_7
@@ -141,19 +143,21 @@ flowchart LR
   t1_11 --> t1_12
   t1_12 --> t1_13
   t1_13 --> t1_14
-  t1_12 --> t1_15
+  t1_2 --> t1_15a
+  t1_12 --> t1_15b
+  t1_15a --> t1_15b
   t1_14 --> t1_16
-  t1_15 --> t1_16
+  t1_15b --> t1_16
   t1_16 --> t1_17
   t1_17 --> t1_18
   t1_10 --> t1_19
   t1_18 --> t1_19
 ```
 
-**Order of work:** 1.1, 1.2 and 1.3 side by side. Then 1.4, 1.7 and 1.8. Then 1.5, then 1.6. Then 1.9 and 1.11. Then 1.10 and 1.12. Then 1.13 and 1.15. Then 1.14, 1.16, 1.17, 1.18 and 1.19 one after another.
+**Order of work:** 1.1, 1.2 and 1.3 side by side. Then 1.4, 1.7, 1.8 and 1.15a. Then 1.5, then 1.6. Then 1.9 and 1.11. Then 1.10 and 1.12. Then 1.13 and 1.15b. Then 1.14, 1.16, 1.17, 1.18 and 1.19 one after another.
 
-- [ ] **Owner C: Decide where the pipeline records which file version is current.**
-  SQLite, or DynamoDB Local. Both options are described under "Still to decide" in `plan.md`.
+- [x] **Owner C: Decide where the pipeline records which file version is current.**
+  Decided on 7 October 2026: SQLite. DynamoDB Local was the other option.
 
 - [ ] **1.1 Source contract.** The YAML format that describes a source (fields, units, time convention, licence, duplicate key, which field is which parameter), its loader, and the OpenAQ contract.
   Needs: 0.4, 0.8a. Done when: tests load the OpenAQ contract and reject a broken one.
@@ -168,12 +172,12 @@ flowchart LR
   Needs: 1.1, 1.2. Done when: tests accept `µg/m³`, `μg/m3` and `ug/m3` for PM2.5 and reject any other unit.
 
 - [ ] **1.5 File validation.** Structural checks only: the file opens, the header matches the contract, it has rows, its keys and dates match its name, and its units pass.
-  Needs: 1.4. Done when: tests accept a good file and a short day, and reject each kind of broken file with a reason.
+  Needs: 1.4, 1.7. Done when: tests accept a real file from the test data and a short day, and reject each kind of broken file with a reason.
 
 - [ ] **1.6 Ingest function.** Read a delivered file, validate it, store it as validated or quarantined under its content hash, then move the pointer.
   Needs: 1.3, 1.5. Done when: the unit tests listed under "Publish gate" in `plan.md` pass: duplicate event, broken newer version, stale replay, and a failure between the write and the pointer move.
 
-- [ ] **1.7 OpenAQ adapter.** Find and download archive files for a station and day, and a small window of real files committed as test data if the licence allows.
+- [ ] **1.7 OpenAQ adapter.** Find and download archive files for a station and day, and a small window of real files committed as test data if the licence allows. The window is January 2025 and January 2026 for the three Berlin monitors, so that a month can be compared with the same month a year earlier on the test data.
   Needs: 1.1. Done when: one command downloads a day for the chosen station, and the test data is in place with its licence noted.
 
 - [ ] **1.8 Source catalog entry.** A catalog file per source, generated from its contract: title, publisher, licence, time range, area, update frequency, download location.
@@ -185,10 +189,10 @@ flowchart LR
 - [ ] **1.10 Airflow.** Airflow runs the daily ingestion and the backfill.
   Needs: 1.9. Done when: one command starts Airflow locally and a run adds a new day.
 
-- [ ] **1.11 Raw model.** dbt reads the file versions the pointer names into one long table, with an enforced contract.
-  Needs: 1.2, 1.6, 1.7. Done when: dbt builds the raw table from the test data and its tests pass.
+- [ ] **1.11 Raw model.** dbt reads the file versions the pointer names into one long table, with an enforced contract. The table is incremental: a build reads only the file versions the pointer newly names and replaces the rows of those stations and days.
+  Needs: 1.2, 1.6, 1.7. Done when: dbt builds the raw table from the test data and its tests pass, and a second build after one re-issued file replaces only that station and day.
 
-- [ ] **1.12 Hourly model.** One row per station, parameter and hour. The hour is named by its start, duplicates are resolved, and each hour is marked valid or invalid with a reason.
+- [ ] **1.12 Hourly model.** One row per station, parameter and hour. The hour is named by its start, duplicates are resolved, and each hour is marked valid or invalid with a reason. The table is incremental in the same way: only the hours of the stations and days that changed are replaced.
   Needs: 1.11. Done when: tests cover the end-of-period timestamps, duplicate rows, conflicting rows and out-of-range values.
 
 - [ ] **1.13 Daily model.** One row for every station, parameter and date in its period, with a status: valid, low coverage, or no file. Days follow the station's local time, including days with 23 or 25 hours.
@@ -197,14 +201,17 @@ flowchart LR
 - [ ] **1.14 Exceedance.** Days above the WHO value by station and month, and the comparison with the same month a year earlier, with the number of valid days behind each figure.
   Needs: 1.13. Done when: tests check the counts on the test data, including a day exactly at 15.
 
-- [ ] **1.15 Metadata and catalog.** The station, sensor, datastream and observation tables, and the availability catalog: for each datastream its time range, completeness, freshness and invalid hours by reason.
-  Needs: 1.12. Done when: dbt builds them and tests show the catalog agrees with the observation table.
+- [ ] **1.15a Station, sensor and datastream tables.** Task 1.15 was split in two to stay within the size rule. The three tables that describe what is measured where, built from the registry.
+  Needs: 1.2. Done when: dbt builds them and their tests pass.
+
+- [ ] **1.15b Observation table and availability catalog.** The observation table, and the availability catalog: for each datastream its time range, completeness, freshness and invalid hours by reason.
+  Needs: 1.12, 1.15a. Done when: dbt builds them and tests show the catalog agrees with the observation table.
 
 - [ ] **1.16 Gate tests.** The models are built in a staging area. Two tests guard publishing: every date has a row, and no day that was valid in the published tables becomes invalid unless it is on the acknowledged list.
-  Needs: 1.14, 1.15. Done when: a good build passes, and a build from a truncated file fails on the retained-days test alone.
+  Needs: 1.14, 1.15b. Done when: a good build passes, and a build from a truncated file fails on the retained-days test alone.
 
-- [ ] **1.17 Promotion.** A fully passing build is copied to the published Iceberg tables in one commit, which is one snapshot, and a row is added to the release log. A failed build publishes nothing.
-  Needs: 1.16. Done when: tests show one snapshot per release, and a failure injected in the middle of promotion leaves the published tables unchanged.
+- [ ] **1.17 Promotion.** A fully passing build is copied to the published Iceberg tables in one transaction, and a row is added to the release log with each table's snapshot id. The published observation table is one table for all sources, partitioned by source and month. A failed build publishes nothing.
+  Needs: 1.16. Done when: tests show every published table changes in the same release or none does, the release log names each table's snapshot, and a failure injected in the middle of promotion leaves the published tables unchanged.
 
 - [ ] **1.18 Gate demo.** A script publishes a good release, delivers a re-issued file that is valid but holds 6 of 24 hours, and shows the gate blocking it. Delivering the complete file again publishes the next release.
   Needs: 1.17. Done when: the script ends with every assertion passing.
@@ -298,10 +305,10 @@ flowchart LR
 - [ ] **2.10 Data health.** Gaps, stuck values and late deliveries for each station and sensor.
   Needs: 2.6. Done when: tests detect each of the three on test data built to contain it.
 
-- [ ] **2.11 Dashboard and map.** The dashboard starts with one command and shows the station map for both cities.
+- [ ] **2.11 Dashboard and map.** The dashboard starts with one command and shows the station map for both cities. Every view of the dashboard carries one sentence saying what it shows and how to read it, a finding in plain words above its chart, and short definitions of the terms it uses.
   Needs: 2.6, Owner D. Done when: the command opens the dashboard and the map shows every registered station.
 
-- [ ] **2.12 Exceedance view.** Days above the WHO value by month and year, for both cities.
+- [ ] **2.12 Exceedance view.** Days above the WHO value by month and year, for both cities, shown as a share of the valid days with the count beside it, like "55%, 17/31 days".
   Needs: 2.11. Done when: the view matches the script from task 1.19.
 
 - [ ] **2.13 Sensor versus monitor view.** Disagreement by pair, and against humidity and temperature.
@@ -388,6 +395,7 @@ flowchart LR
   t4_9["4.9 Known-answer tests"]
   t4_10["4.10 Hostile and out-of-scope tests"]
   t4_11["4.11 Test table and README"]
+  t4_12["4.12 Chat results on the dashboard"]
   t4_2 --> t4_3
   t4_2 --> t4_4
   t4_2 --> t4_5
@@ -402,9 +410,10 @@ flowchart LR
   t4_8 --> t4_9
   t4_9 --> t4_10
   t4_10 --> t4_11
+  t4_11 --> t4_12
 ```
 
-**Order of work:** 4.1 and 4.2 side by side. Then the five tools, 4.3 to 4.7, side by side. Then 4.8, 4.9, 4.10 and 4.11 one after another.
+**Order of work:** 4.1 and 4.2 side by side. Then the five tools, 4.3 to 4.7, side by side. Then 4.8, 4.9, 4.10, 4.11 and 4.12 one after another.
 
 - [ ] **4.1 Local model check.** The chosen local model returns valid tool arguments in at least 8 of 10 trial calls, and its licence is read.
   Needs: 3.7. Done when: a script prints the count and the licence is recorded.
@@ -438,6 +447,9 @@ flowchart LR
 
 - [ ] **4.11 Test table and README.** The pass counts in the README with the limits of what they show. The gate demo also checks that the agent's answer does not change when a bad file is blocked.
   Needs: 4.10. Done when: the table is produced by a script, not written by hand.
+
+- [ ] **4.12 Chat results on the dashboard.** Added on 7 October 2026 at the owner's request. An answer from the agent can be shown as a new section on the dashboard page: a table or a chart drawn from the tool's result. A section can be deleted, lasts for the session, and is kept only if the user chooses to keep it.
+  Needs: 2.11, 4.11. Done when: asking an example question adds a section whose numbers equal the tool's result, and deleting the section removes it.
 
 ---
 
