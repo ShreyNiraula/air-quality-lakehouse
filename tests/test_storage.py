@@ -9,7 +9,7 @@ import threading
 
 import pytest
 
-from airquality.storage import Current, DirectoryStorage, SqlitePointer, padded
+from airquality.storage import Current, DirectoryStorage, SqlitePointer
 
 KEY, OLD, NEW = "landing/openaq/location-3019-20250101.csv.gz", "a" * 64, "b" * 64
 
@@ -82,7 +82,7 @@ def test_a_write_that_fails_leaves_the_file_that_was_there(storage, tmp_path, mo
 def test_the_first_event_sets_the_pointer_and_a_newer_one_moves_it(pointer):
     assert pointer.get(KEY) is None and pointer.entries() == {}
     assert pointer.move(KEY, OLD, "0055AED6DCD90281E5") is True
-    assert pointer.get(KEY) == Current(OLD, padded("0055AED6DCD90281E5"))
+    assert pointer.get(KEY) == Current(OLD, "55AED6DCD90281E5")
     assert pointer.move(KEY, NEW, "0055AED6DCD90281E6") is True
     assert pointer.get(KEY).version == NEW
 
@@ -90,21 +90,31 @@ def test_the_first_event_sets_the_pointer_and_a_newer_one_moves_it(pointer):
 def test_an_older_event_cannot_move_the_pointer_back(pointer):
     pointer.move(KEY, NEW, "0055AED6DCD90281E6")
     assert pointer.move(KEY, OLD, "0055AED6DCD90281E5") is False
-    assert pointer.get(KEY) == Current(NEW, padded("0055AED6DCD90281E6"))
+    assert pointer.get(KEY) == Current(NEW, "55AED6DCD90281E6")
 
 
 def test_a_duplicate_event_changes_nothing(pointer):
     assert pointer.move(KEY, OLD, "0055AED6DCD90281E5") is True
     assert pointer.move(KEY, OLD, "0055AED6DCD90281E5") is False
     assert pointer.move(KEY, NEW, "0055aed6dcd90281e5") is False  # the same event, in small letters
-    assert pointer.entries() == {KEY: Current(OLD, padded("0055AED6DCD90281E5"))}
+    assert pointer.entries() == {KEY: Current(OLD, "55AED6DCD90281E5")}
 
 
 def test_sequencers_are_compared_as_numbers_whatever_their_length(pointer):
     assert pointer.move(KEY, OLD, "FF") is True
     assert pointer.move(KEY, NEW, "100") is True  # as plain text, "100" sorts before "FF"
     assert pointer.move(KEY, OLD, "00FF") is False
+    assert pointer.move(KEY, OLD, "0000100") is False  # the same event, with zeros in front
     assert pointer.get(KEY).version == NEW
+
+
+def test_a_sequencer_may_be_of_any_length(pointer):
+    assert pointer.move(KEY, OLD, "F" * 40) is True
+    assert pointer.move(KEY, NEW, "1" + "0" * 40) is True
+    assert pointer.move(KEY, OLD, "F" * 40) is False
+    assert pointer.get(KEY) == Current(NEW, "1" + "0" * 40)
+    assert pointer.move("landing/another", OLD, "000") is True
+    assert pointer.move("landing/another", NEW, "0") is False  # zero, however it is written
 
 
 def test_each_file_has_its_own_pointer(pointer):
@@ -118,7 +128,7 @@ def test_each_file_has_its_own_pointer(pointer):
 
 @pytest.mark.parametrize(
     ("key", "version", "sequencer"),
-    [("", OLD, "1"), (KEY, "", "1"), (KEY, OLD, ""), (KEY, OLD, "12G4"), (KEY, OLD, "1" * 33)],
+    [("", OLD, "1"), (KEY, "", "1"), (KEY, OLD, ""), (KEY, OLD, "12G4"), (KEY, OLD, " 1")],
 )
 def test_an_event_that_cannot_be_ordered_is_refused(pointer, key, version, sequencer):
     with pytest.raises(ValueError):
@@ -139,7 +149,7 @@ def test_events_that_arrive_together_leave_the_newest(pointer):
         thread.start()
     for thread in threads:
         thread.join()
-    assert pointer.get(KEY) == Current("version-C8", padded("C8"))
+    assert pointer.get(KEY) == Current("version-C8", "C8")
 
 
 def test_the_local_pointer_is_kept_in_its_file(tmp_path):

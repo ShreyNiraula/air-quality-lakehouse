@@ -17,8 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
-SEQUENCER = re.compile(r"[0-9A-F]{1,32}")
-WIDTH = 32  # every sequencer is stored at this length, so that text order is their order
+SEQUENCER = re.compile(r"[0-9A-Fa-f]+")
 
 
 class Storage(Protocol):
@@ -38,7 +37,7 @@ class Current:
     """What the pointer says of one file: its current version, and the event that set it."""
 
     version: str  # the content's SHA-256
-    sequencer: str  # as stored: in capitals, at full length
+    sequencer: str  # as stored: in capitals, with no zeros in front
 
 
 class Pointer(Protocol):
@@ -59,13 +58,16 @@ class Pointer(Protocol):
         ...
 
 
-def padded(sequencer: str) -> str:
-    """A sequencer at full length. S3 says to pad on the left before comparing two of them."""
-    if not SEQUENCER.fullmatch(sequencer.upper()):
-        raise ValueError(
-            f"not a sequencer, which is 1 to {WIDTH} hexadecimal digits: {sequencer!r}"
-        )
-    return sequencer.upper().rjust(WIDTH, "0")
+def plain(sequencer: str) -> str:
+    """A sequencer in capitals with no zeros in front, so that two of them can be compared.
+
+    S3 says to pad the shorter of two on the left and then compare them as text. Without the
+    zeros in front that is: the longer one is the newer, and at equal length text order decides.
+    A sequencer may be of any length.
+    """
+    if not SEQUENCER.fullmatch(sequencer):
+        raise ValueError(f"not a sequencer, which is hexadecimal digits: {sequencer!r}")
+    return sequencer.upper().lstrip("0") or "0"
 
 
 class DirectoryStorage:
@@ -128,10 +130,13 @@ class SqlitePointer:
         _, changed = self._run(
             "INSERT INTO pointer (key, version, sequencer) VALUES (?, ?, ?) "
             "ON CONFLICT (key) DO UPDATE SET version = excluded.version, "
-            "sequencer = excluded.sequencer WHERE excluded.sequencer > pointer.sequencer",
+            "sequencer = excluded.sequencer "
+            "WHERE length(excluded.sequencer) > length(pointer.sequencer) OR ("
+            "length(excluded.sequencer) = length(pointer.sequencer) "
+            "AND excluded.sequencer > pointer.sequencer)",
             key,
             version,
-            padded(sequencer),
+            plain(sequencer),
         )
         return changed == 1
 
