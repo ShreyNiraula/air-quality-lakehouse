@@ -11,20 +11,31 @@ input, which the models count; a file that fails a check is quarantined with its
 import csv
 import gzip
 import io
+import re
 import zlib
 from datetime import date, datetime, timedelta
 
 from airquality.contracts import Contract
 from airquality.units import accepted, passes
 
+# CSV as RFC 4180 writes it: a field is in quotes, with a quote inside it doubled, or it has no
+# quote at all. Python's reader takes a quote in the middle of a bare field as part of the value.
+FIELD = r'(?:"(?:[^"]|"")*"|[^",\r\n]*)'
+RECORD = re.compile(rf"{FIELD}(?:,{FIELD})*(?:\r?\n|\Z)")
+
 
 def rows_of(content: bytes, contract: Contract) -> list[list[str]]:
     """The file as rows of texts, the header first. Raises ValueError if it does not open."""
     try:
         raw = gzip.decompress(content) if contract.format.endswith(".gz") else content
-        # Strict: without it a quote that is never closed takes the rest of the file as one field.
-        text = io.StringIO(raw.decode("utf-8"), newline="")
-        return [row for row in csv.reader(text, strict=True) if row]
+        text, at = raw.decode("utf-8"), 0
+        while at < len(text):
+            record = RECORD.match(text, at)
+            if not record:
+                line = text.count("\n", 0, at) + 1
+                raise csv.Error(f"a quote is out of place in the record that starts on line {line}")
+            at = record.end()
+        return [row for row in csv.reader(io.StringIO(text, newline=""), strict=True) if row]
     except (OSError, EOFError, zlib.error, UnicodeDecodeError, csv.Error) as error:
         raise ValueError(f"the file does not open: {error}") from error
 

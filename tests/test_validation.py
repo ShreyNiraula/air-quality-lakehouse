@@ -16,6 +16,9 @@ LINES = gzip.decompress(REAL).decode("utf-8").splitlines()  # the header, then 7
 PM25 = [line for line in LINES if '"pm25"' in line]
 
 
+QUOTE = "the file does not open: a quote is out of place in the record that starts on line "
+
+
 def packed(lines: list[str]) -> bytes:
     return gzip.compress("\n".join(lines).encode("utf-8") + b"\n")
 
@@ -42,6 +45,11 @@ def test_a_reading_out_of_range_is_valid_because_values_are_not_judged():
         assert check(packed([LINES[0], PM25[0].replace('"26.81"', f'"{value}"')])) == []
 
 
+def test_a_quote_a_comma_and_a_line_break_inside_quotes_are_part_of_the_text():
+    named = PM25[0].replace('"Berlin Mitte-3019"', '"Berlin ""Mitte"",\n3019"')
+    assert named != PM25[0] and check(packed([LINES[0], named, PM25[1]])) == []
+
+
 def test_the_unit_of_a_parameter_the_contract_does_not_read_is_not_checked():
     other = next(line for line in LINES if '"no2"' in line)
     assert check(packed([LINES[0], other.replace("µg/m³", "ppm")])) == []
@@ -60,12 +68,11 @@ def changed(old: str, new: str, rows: list[str] = LINES[1:]) -> bytes:
         (REAL[:200], ["the file does not open: Compressed file ended before"]),
         (gzip.compress(b"\xff\xfe\x00"), ["the file does not open: 'utf-8' codec can't decode"]),
         (gzip.compress(b""), ["the file is empty"]),
-        (packed([*LINES[:-1], LINES[-1][:-1]]), ["the file does not open: unexpected end of data"]),
-        (
-            packed([*LINES[:5], LINES[5][:-1], *LINES[6:]]),
-            ["the file does not open: ',' expected after"],
-        ),
-        (changed('"pm25"', '"pm25"x'), ["the file does not open: ',' expected after '\"'"]),
+        (packed([*LINES[:-1], LINES[-1][:-1]]), [QUOTE + "73"]),
+        (packed([*LINES[:5], LINES[5][:-1], *LINES[6:]]), [QUOTE + "6"]),
+        (changed('"pm25"', '"pm25"x', PM25[:2]), [QUOTE + "2"]),
+        (changed('"pm25"', 'pm25"', PM25[:2]), [QUOTE + "2"]),
+        (changed('"26.81"', '26.81"', PM25[:2]), [QUOTE + "2"]),
         (packed(LINES[:1]), ["the file has a header and no rows"]),
         (packed(LINES[1:]), ["the header is 3019,6422,Berlin Mitte-3019,"]),
         (packed([LINES[0].replace("units", "unit"), *LINES[1:]]), ["the header is location_id,"]),
@@ -110,6 +117,8 @@ def changed(old: str, new: str, rows: list[str] = LINES[1:]) -> bytes:
         "the last quote not closed",
         "a quote in the middle not closed",
         "text after a closing quote",
+        "a parameter with its first quote missing",
+        "a value with its first quote missing",
         "no rows",
         "no header",
         "a field renamed",
