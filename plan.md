@@ -215,7 +215,7 @@ These hold for every parameter. Values that differ by parameter come from the vo
 
 **Dashboard**
 - Every view carries one sentence saying what it shows and how to read it, a finding in plain words above its chart, and short definitions of the terms it uses (PM2.5, the WHO value, a valid day). A reader who knows nothing about air quality must be able to say what a view means.
-- Exceedance days are shown as a share of the valid days, with the count beside it, for example "55%, 17 of 31 days".
+- Exceedance days are shown as a share of the valid days, with the count beside it, for example "55%, 17/31 days".
 - A view that does not apply to the chosen parameter says so. Whether a parameter has a guideline comes from the vocabulary, never from the view's code.
 - An answer from the agent can be shown as a new section on the page, a table or a chart drawn from the tool's result. A section can be deleted, lasts for the session, and is kept only if the user chooses to keep it.
 - Sources are never averaged together. A figure for a city comes from the reference monitors and says so; low-cost sensors and model data are shown beside it, labelled.

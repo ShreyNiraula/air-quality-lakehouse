@@ -308,7 +308,7 @@ flowchart LR
 - [ ] **2.11 Dashboard and map.** The dashboard starts with one command and shows the station map for both cities. Every view of the dashboard carries one sentence saying what it shows and how to read it, a finding in plain words above its chart, and short definitions of the terms it uses.
   Needs: 2.6, Owner D. Done when: the command opens the dashboard and the map shows every registered station.
 
-- [ ] **2.12 Exceedance view.** Days above the WHO value by month and year, for both cities, shown as a share of the valid days with the count beside it.
+- [ ] **2.12 Exceedance view.** Days above the WHO value by month and year, for both cities, shown as a share of the valid days with the count beside it, like "55%, 17/31 days".
   Needs: 2.11. Done when: the view matches the script from task 1.19.
 
 - [ ] **2.13 Sensor versus monitor view.** Disagreement by pair, and against humidity and temperature.
