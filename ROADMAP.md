@@ -162,7 +162,7 @@ flowchart LR
 - [x] **1.1 Source contract.** The YAML format that describes a source (fields, units, time convention, licence, duplicate key, which field is which parameter), its loader, and the OpenAQ contract.
   Needs: 0.4, 0.8a. Done when: tests load the OpenAQ contract and reject a broken one.
 
-- [ ] **1.2 Vocabulary and registry.** The dbt project with two seeds: the parameter vocabulary, holding PM2.5 only, and the registry of stations and sensors built from the manifests.
+- [x] **1.2 Vocabulary and registry.** The dbt project with two seeds: the parameter vocabulary, holding PM2.5 only, and the registry of stations and sensors built from the manifests.
   Needs: 0.3, 0.6, 0.8b. Done when: dbt loads both seeds and their tests pass.
 
 - [ ] **1.3 Storage and pointer.** Two small interfaces with local versions: files in a directory, and the pointer that records which version of a file is current and only ever moves forward.

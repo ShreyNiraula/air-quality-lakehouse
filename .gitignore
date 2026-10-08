@@ -4,3 +4,7 @@
 __pycache__/
 .pytest_cache/
 .ruff_cache/
+# What dbt and its candidate database leave behind
+dbt_project/target/
+dbt_project/logs/
+*.duckdb

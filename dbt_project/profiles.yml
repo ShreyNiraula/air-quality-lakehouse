@@ -1,0 +1,9 @@
+# Where dbt builds: a DuckDB file outside the Iceberg catalog, the candidate of `plan.md`.
+# A passing candidate is copied into the catalog by the promotion, task 1.17.
+airquality:
+  target: candidate
+  outputs:
+    candidate:
+      type: duckdb
+      path: "{{ env_var('AIRQUALITY_CANDIDATE', 'candidate.duckdb') }}"
+      threads: 1

@@ -1,0 +1,2 @@
+parameter,cf_standard_name,unit,valid_min,valid_max,aggregation,guideline_value,guideline_name
+pm25,mass_concentration_of_pm2p5_ambient_aerosol_particles_in_air,ug/m3,0,1000,mean,15,WHO 2021 24-hour guideline value

@@ -18,4 +18,7 @@ dbt-check:  ## start the object store and the Iceberg catalog, then run the dbt 
 	docker compose up -d --wait
 	uv run python -m airquality.checks.dbt_build
 
-.PHONY: setup lint test check lakehouse dbt-check
+seeds:  ## load the vocabulary and the registry into the candidate database, and test them
+	uv run dbt build --project-dir dbt_project --profiles-dir dbt_project
+
+.PHONY: setup lint test check lakehouse dbt-check seeds

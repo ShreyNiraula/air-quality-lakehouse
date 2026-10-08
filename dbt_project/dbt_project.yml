@@ -1,0 +1,20 @@
+# The dbt project of the platform. Task 1.2 starts it with its two seeds, the vocabulary and the
+# registry; the models follow from task 1.11. `make seeds` loads and tests the seeds.
+name: airquality
+version: "1.0"
+profile: airquality
+seed-paths: [seeds]
+test-paths: [tests]
+flags:
+  send_anonymous_usage_stats: false
+
+seeds:
+  airquality:
+    parameter:
+      # Read as numbers with a fraction, so that 15 and 37.5 are the same kind of value.
+      +column_types: {valid_min: double, valid_max: double, guideline_value: double}
+    registry:
+      # Ids are text: an openSenseMap box id is not a number, and an OpenAQ id only looks like one.
+      +column_types:
+        {station_id: varchar, sensor_id: varchar, latitude: double, longitude: double,
+         start_date: date}

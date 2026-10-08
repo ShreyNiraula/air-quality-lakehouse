@@ -1,0 +1,78 @@
+seeds:
+  - name: parameter
+    description: >
+      The vocabulary: one row per kind of measurement, as in the table of plan.md. It is written
+      by hand. Adding a parameter is one row here and a mapping in each source's contract.
+    columns:
+      - name: parameter
+        description: The platform's own name, used everywhere a parameter is named.
+        data_tests: [unique, not_null]
+      - name: cf_standard_name
+        description: The CF standard name. CF supplies the name only, not the unit.
+        data_tests: [unique, not_null]
+      - name: unit
+        description: The stored unit, in UCUM spelling.
+        data_tests: [not_null]
+      - name: valid_min
+        description: The lowest hourly value that counts as valid.
+        data_tests: [not_null]
+      - name: valid_max
+        description: The highest hourly value that counts as valid.
+        data_tests: [not_null]
+      - name: aggregation
+        description: How readings become an hour and hours a day. Only the plain mean exists.
+        data_tests:
+          - not_null
+          - accepted_values: {arguments: {values: [mean]}}
+      - name: guideline_value
+        description: The daily value a day is compared with, in the stored unit. Empty if none.
+      - name: guideline_name
+        description: What that value is, in words. Empty if there is none.
+
+  - name: registry
+    description: >
+      The stations and the one sensor used for each of their parameters. It is written from the
+      manifests by `python -m airquality.registry` and is not edited by hand.
+    data_tests:
+      - unique:
+          name: registry_one_row_per_sensor
+          arguments: {column_name: "source || '/' || sensor_id"}
+      - unique:
+          name: registry_one_sensor_per_station_and_parameter
+          arguments: {column_name: "source || '/' || station_id || '/' || parameter"}
+    columns:
+      - name: source
+        data_tests:
+          - not_null
+          - accepted_values: {arguments: {values: [openaq]}}
+      - name: station_id
+        description: The source's id of the site. For OpenAQ, the location id.
+        data_tests: [not_null]
+      - name: station_name
+        data_tests: [not_null]
+      - name: city
+        data_tests: [not_null]
+      - name: latitude
+        data_tests: [not_null]
+      - name: longitude
+        data_tests: [not_null]
+      - name: timezone
+        description: The IANA timezone that the station's days follow.
+        data_tests: [not_null]
+      - name: provider
+        data_tests: [not_null]
+      - name: licence
+        data_tests: [not_null]
+      - name: credit
+        description: The credit line to show with the station's data.
+        data_tests: [not_null]
+      - name: sensor_id
+        description: The one sensor whose rows are used for this station and parameter.
+        data_tests: [not_null]
+      - name: parameter
+        data_tests:
+          - not_null
+          - relationships: {arguments: {to: ref('parameter'), field: parameter}}
+      - name: start_date
+        description: The first day of the station's period for this parameter.
+        data_tests: [not_null]
