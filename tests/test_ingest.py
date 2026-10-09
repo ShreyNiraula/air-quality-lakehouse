@@ -11,7 +11,7 @@ import pytest
 
 from airquality import openaq
 from airquality.ingest import Event, Outcome, ingest
-from airquality.storage import DirectoryStorage, SqlitePointer
+from airquality.storage import Current, DirectoryStorage, SqlitePointer
 
 STATION, DAY = "3019", date(2025, 1, 1)
 FILE = f"openaq/{openaq.key(STATION, DAY)}"
@@ -94,10 +94,19 @@ def test_a_stale_event_replayed_later_does_not_move_the_pointer_back(storage, po
     assert stored(tmp_path) == sorted(f"validated/{FILE}/{sha(c)}" for c in (REAL, SHORT))
 
 
-def test_the_newer_event_wins_whichever_order_the_two_arrive_in(storage, pointer):
-    for content, sequencer in ((SHORT, "0B"), (REAL, "0A")):
-        ingest(deliver(storage, content, sequencer), storage, pointer)
-    assert pointer.get(FILE).version == sha(SHORT)
+@pytest.mark.parametrize(
+    "deliveries",
+    [((REAL, "0A"), (SHORT, "0B")), ((SHORT, "0B"), (REAL, "0A"))],
+    ids=["older first", "newer first"],
+)
+def test_the_newer_event_wins_whichever_order_the_two_arrive_in(deliveries, storage, pointer):
+    moved = [
+        ingest(deliver(storage, content, sequencer), storage, pointer).moved
+        for content, sequencer in deliveries
+    ]
+    # The newer one moves the pointer either way; the older one only if it came first.
+    assert moved == ([True, True] if deliveries[0][1] == "0A" else [True, False])
+    assert pointer.get(FILE) == Current(sha(SHORT), "B")
 
 
 class FailingPointer:
