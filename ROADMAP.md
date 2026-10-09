@@ -174,7 +174,7 @@ flowchart LR
 - [x] **1.5 File validation.** Structural checks only: the file opens, the header matches the contract, it has rows, its keys and dates match its name, and its units pass.
   Needs: 1.4, 1.7. Done when: tests accept a real file from the test data and a short day, and reject each kind of broken file with a reason.
 
-- [ ] **1.6 Ingest function.** Read a delivered file, validate it, store it as validated or quarantined under its content hash, then move the pointer.
+- [x] **1.6 Ingest function.** Read a delivered file, validate it, store it as validated or quarantined under its content hash, then move the pointer.
   Needs: 1.3, 1.5. Done when: the unit tests listed under "Publish gate" in `plan.md` pass: duplicate event, broken newer version, stale replay, and a failure between the write and the pointer move.
 
 - [x] **1.7 OpenAQ adapter.** Find and download archive files for a station and day, and a small window of real files committed as test data if the licence allows. The window is January 2025 and January 2026 for the three Berlin monitors, so that a month can be compared with the same month a year earlier on the test data.
