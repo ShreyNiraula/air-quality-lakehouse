@@ -157,6 +157,12 @@ def test_an_s3_etag_in_quotes_and_capitals_names_the_same_content(storage, point
     assert ingest(event, storage, pointer).status == "validated"
 
 
+def moved(old: str, new: str) -> str:
+    """The real file's landing key, with one folder of it changed."""
+    assert old in LANDING
+    return LANDING.replace(old, new, 1)
+
+
 @pytest.mark.parametrize(
     ("key", "reason"),
     [
@@ -164,8 +170,16 @@ def test_an_s3_etag_in_quotes_and_capitals_names_the_same_content(storage, point
         (f"landing/openaq/{openaq.key(STATION, date(2025, 1, 2))}", "another day in 72 of 72"),
         ("landing/openaq/elsewhere/day.csv.gz", "not the key of an OpenAQ day file"),
         (f"landing/nosuch/{openaq.key(STATION, DAY)}", "no source is called 'nosuch'"),
+        (moved("locationid=3019", "locationid=4762"), "the key is records/csv.gz/locationid=4762"),
+        (moved("year=2025", "year=2026"), "the key is records/csv.gz/locationid=3019/year=2026"),
+        (moved("month=01", "month=02"), "the key is records/csv.gz/locationid=3019/year=2025/m"),
+        (moved("records/", "copies/records/"), "the key is copies/records/"),
     ],
-    ids=["another station's name", "another day's name", "a name not of a day", "no source"],
+    ids=[
+        *("another station's name", "another day's name", "a name not of a day", "no source"),
+        *("another station's folder", "another year's folder", "another month's folder"),
+        "another archive folder",
+    ],
 )
 def test_a_file_under_a_name_that_does_not_fit_it_is_quarantined(key, reason, storage, pointer):
     outcome = ingest(deliver(storage, REAL, "0A", key), storage, pointer)

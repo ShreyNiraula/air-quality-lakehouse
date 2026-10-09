@@ -30,8 +30,10 @@ from airquality.storage import Pointer, Storage
 from airquality.validation import validate
 
 LANDING = "landing/"
-# How each source's key names the station and the day of its file.
-NAMED: dict[str, Callable[[str], tuple[str, date]]] = {"openaq": openaq.named}
+# For each source: the station and day its key names, and the key it gives a station and day.
+KEYS: dict[str, tuple[Callable[[str], tuple[str, date]], Callable[[str, date], str]]] = {
+    "openaq": (openaq.named, openaq.key)
+}
 
 
 @dataclass(frozen=True)
@@ -54,12 +56,16 @@ class Outcome:
 
 def reasons_of(source: str, name: str, content: bytes) -> list[str]:
     """Why a delivered file is not valid; none if it is."""
-    if source not in NAMED:
+    if source not in KEYS:
         return [f"no source is called {source!r}"]
+    named, key = KEYS[source]
     try:
-        station, day = NAMED[source](name)
+        station, day = named(name)
     except ValueError as error:
         return [str(error)]
+    # The whole key, folders included, must be the one the source gives that station and day.
+    if name != key(station, day):
+        return [f"the key is {name}, and not {key(station, day)}"]
     return validate(content, station, day, contracts.load(source))
 
 
