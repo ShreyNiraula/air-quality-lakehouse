@@ -201,7 +201,7 @@ flowchart LR
 - [ ] **1.14 Exceedance.** Days above the WHO value by station and month, and the comparison with the same month a year earlier, with the number of valid days behind each figure.
   Needs: 1.13. Done when: tests check the counts on the test data, including a day exactly at 15.
 
-- [ ] **1.15a Station, sensor and datastream tables.** Task 1.15 was split in two to stay within the size rule. The three tables that describe what is measured where, built from the registry.
+- [x] **1.15a Station, sensor and datastream tables.** Task 1.15 was split in two to stay within the size rule. The three tables that describe what is measured where, built from the registry.
   Needs: 1.2. Done when: dbt builds them and their tests pass.
 
 - [ ] **1.15b Observation table and availability catalog.** The observation table, and the availability catalog: for each datastream its time range, completeness, freshness and invalid hours by reason.
