@@ -1,10 +1,15 @@
 # The dbt project of the platform. Task 1.2 starts it with its two seeds, the vocabulary and the
-# registry; the models follow from task 1.11. `make seeds` loads and tests the seeds.
+# registry, and task 1.15a adds the station, sensor and datastream tables built from them.
+# `make seeds` loads the seeds, builds the tables and runs every test.
 name: airquality
 version: "1.0"
 profile: airquality
 seed-paths: [seeds]
+model-paths: [models]
 test-paths: [tests]
+models:
+  airquality:
+    +materialized: table
 flags:
   send_anonymous_usage_stats: false
 
