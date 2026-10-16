@@ -183,7 +183,7 @@ flowchart LR
 - [x] **1.8 Source catalog entry.** A catalog file per source, generated from its contract: title, publisher, licence, time range, area, update frequency, download location.
   Needs: 1.1. Done when: one command writes the OpenAQ entry and a test checks it against the contract.
 
-- [ ] **1.9 Backfill.** Load history from 1 January 2025 one file at a time, slowed down to be polite, and able to resume: a file version already validated is skipped.
+- [x] **1.9 Backfill.** Load history from 1 January 2025 one file at a time, slowed down to be polite, and able to resume: a file version already validated is skipped.
   Needs: 1.6, 1.7. Done when: one station is loaded for one month, and running it again downloads nothing new.
 
 - [ ] **1.10 Airflow.** Airflow runs the daily ingestion and the backfill.
