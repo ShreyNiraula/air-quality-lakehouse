@@ -5,7 +5,7 @@
 For each day of each month the archive lists, the file is downloaded into `landing/` and given
 to `ingest` (task 1.6), exactly as a delivery would be. Downloads are spaced out to be polite to
 the archive. A run can stop anywhere and be started again: a day whose listed version is already
-in `landing/` is not downloaded again, and is skipped once ingestion has finished with it.
+in `landing/` is not downloaded again, and is skipped once the pointer names it.
 """
 
 import argparse
@@ -19,7 +19,7 @@ from pathlib import Path
 
 from airquality import openaq
 from airquality.ingest import Event, ingest
-from airquality.storage import DirectoryStorage, Pointer, SqlitePointer, Storage
+from airquality.storage import Current, DirectoryStorage, Pointer, SqlitePointer, Storage
 
 PAUSE = 1.0  # seconds between two downloads
 
@@ -27,7 +27,7 @@ PAUSE = 1.0  # seconds between two downloads
 @dataclass(frozen=True)
 class Step:
     day: date
-    action: str  # "downloaded", "resumed" (ingested from landing/), or "skipped"
+    action: str  # "downloaded", "resumed" (ingested again from landing/), or "skipped"
     status: str = ""  # what ingestion did: "validated", "quarantined" or "overwritten"
 
 
@@ -36,13 +36,19 @@ def sequencer(written: datetime) -> str:
     return f"{round(written.timestamp() * 1_000_000):X}"
 
 
-def finished(storage: Storage, pointer: Pointer, file: str, content: bytes) -> bool:
-    """Whether ingestion has stored this version and, if it is valid, the pointer names it."""
-    version = hashlib.sha256(content).hexdigest()
-    current = pointer.get(file)
-    return (current is not None and current.version == version) or storage.exists(
-        f"quarantine/{file}/{version}"
-    )
+def newer(written: datetime, current: Current | None, version: str) -> str:
+    """The sequencer for the archive's listed version of a file, whose pointer is `current`.
+
+    The listing names the archive's latest version, so a version other than the current one
+    must move the pointer. If the archive wrote both in the same second, the time alone would
+    not order them, and the sequencer is set one past the current one.
+    """
+    listed = sequencer(written)
+    if current is None or current.version == version:
+        return listed
+    if int(listed, 16) > int(current.sequencer, 16):
+        return listed
+    return f"{int(current.sequencer, 16) + 1:X}"
 
 
 def backfill(
@@ -66,7 +72,10 @@ def backfill(
             landing, file = f"landing/openaq/{listed.key}", f"openaq/{listed.key}"
             content = storage.read(landing) if storage.exists(landing) else None
             if content is not None and hashlib.md5(content).hexdigest() == listed.md5:
-                if finished(storage, pointer, file, content):
+                # Only a version the pointer names is skipped. Any other is ingested again from
+                # landing/, which repairs an unfinished quarantine and reports it again.
+                current = pointer.get(file)
+                if current is not None and current.version == hashlib.sha256(content).hexdigest():
                     steps.append(Step(day, "skipped"))
                     continue
                 action = "resumed"
@@ -77,7 +86,9 @@ def backfill(
                     continue
                 storage.write(landing, content)
                 action = "downloaded"
-            event = Event(landing, hashlib.md5(content).hexdigest(), sequencer(listed.written))
+            version = hashlib.sha256(content).hexdigest()
+            order = newer(listed.written, pointer.get(file), version)
+            event = Event(landing, hashlib.md5(content).hexdigest(), order)
             steps.append(Step(day, action, ingest(event, storage, pointer).status))
     return steps
 

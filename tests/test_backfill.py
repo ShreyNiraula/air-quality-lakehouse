@@ -145,16 +145,56 @@ def test_a_reissued_file_is_downloaded_again_and_becomes_current(store):
     assert store[1].get(file(DAYS[2])).version == hashlib.sha256(shorter).hexdigest()
 
 
-def test_a_quarantined_file_is_not_downloaded_again(store):
-    archive = Archive()
+def quarantined(archive: Archive) -> str:
+    """Make the archive's first day a file with a header and no rows; return its quarantine key."""
     header = gzip.decompress(archive.files[DAYS[0]]).decode().splitlines()[0]
-    archive.files[DAYS[0]] = gzip.compress(header.encode() + b"\n")  # a header and no rows
+    archive.files[DAYS[0]] = gzip.compress(header.encode() + b"\n")
+    return f"quarantine/{file(DAYS[0])}/{hashlib.sha256(archive.files[DAYS[0]]).hexdigest()}"
+
+
+def test_a_quarantined_file_is_checked_again_from_landing_without_downloading_it(store):
+    archive = Archive()
+    quarantined(archive)
     assert run(archive, store)[0] == Step(DAYS[0], "downloaded", "quarantined")
     assert store[1].get(file(DAYS[0])) is None
 
     archive.downloads.clear()
-    assert run(archive, store)[0] == Step(DAYS[0], "skipped")
+    assert run(archive, store)[0] == Step(DAYS[0], "resumed", "quarantined")
     assert archive.downloads == []
+
+
+def test_a_quarantine_left_without_its_reason_is_finished_by_the_next_run(store):
+    storage, _ = store
+    archive = Archive()
+    key = quarantined(archive)
+    run(archive, store)
+    (storage.root / f"{key}.reasons").unlink()  # as if the run stopped before writing it
+
+    run(archive, store)
+    assert storage.read(f"{key}.reasons") == b"the file has a header and no rows"
+
+
+def test_the_command_fails_while_a_day_is_quarantined(tmp_path, monkeypatch):
+    archive = Archive()
+    quarantined(archive)
+    monkeypatch.setattr(openaq, "find", archive.find)
+    monkeypatch.setattr(openaq, "download", archive.download)
+    monkeypatch.setattr("airquality.backfill.PAUSE", 0)
+    arguments = ["--station", STATION, "--month", "2025-01", "--store", str(tmp_path)]
+    assert main(arguments) == 1
+    assert main(arguments) == 1  # and again on the next run, though nothing is downloaded
+
+
+def test_a_reissue_written_in_the_same_second_still_becomes_current(store):
+    archive = Archive()
+    run(archive, store)
+    lines = gzip.decompress(archive.files[DAYS[2]]).decode().splitlines()
+    shorter = gzip.compress(("\n".join(lines[:7]) + "\n").encode())
+    archive.files[DAYS[2]] = shorter  # a new version, listed with the same time as the first
+
+    steps = run(archive, store)
+    assert steps[2] == Step(DAYS[2], "downloaded", "validated")
+    assert store[1].get(file(DAYS[2])).version == hashlib.sha256(shorter).hexdigest()
 
 
 def test_a_later_write_has_a_larger_sequencer():
