@@ -35,7 +35,9 @@ def project(tmp_path):
 def test_dbt_loads_both_seeds_and_their_tests_pass(project, tmp_path, monkeypatch):
     ended = build(project, tmp_path / "candidate.duckdb", monkeypatch)
     assert {ended.pop("parameter"), ended.pop("registry")} == {"success"}
-    assert len(ended) == 27 and set(ended.values()) == {"pass"}
+    # The seeds' 27 tests, then task 1.15a's three tables and their 30 tests.
+    assert {ended.pop(name) for name in ("station", "sensor", "datastream")} == {"success"}
+    assert len(ended) == 57 and set(ended.values()) == {"pass"}
     con = duckdb.connect(str(tmp_path / "candidate.duckdb"))  # as dbt opened it, and still holds it
     pm25 = "SELECT * EXCLUDE (cf_standard_name, guideline_name) FROM parameter"
     assert con.execute(pm25).fetchall() == [("pm25", "ug/m3", 0.0, 1000.0, "mean", 15.0)]

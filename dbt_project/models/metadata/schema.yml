@@ -1,0 +1,62 @@
+models:
+  - name: station
+    description: >
+      One monitoring site, as OGC SensorThings' Thing with its Location, built from the registry.
+    config: {contract: {enforced: true}}
+    columns:
+      - {name: station_key, data_type: varchar, description: "source/station_id",
+         data_tests: [unique, not_null]}
+      - {name: source, data_type: varchar, data_tests: [not_null]}
+      - {name: station_id, data_type: varchar, data_tests: [not_null]}
+      - {name: station_name, data_type: varchar, data_tests: [not_null]}
+      - {name: city, data_type: varchar, data_tests: [not_null]}
+      - {name: latitude, data_type: double, data_tests: [not_null]}
+      - {name: longitude, data_type: double, data_tests: [not_null]}
+      - {name: timezone, data_type: varchar, data_tests: [not_null]}
+      - {name: provider, data_type: varchar, data_tests: [not_null]}
+      - {name: licence, data_type: varchar, data_tests: [not_null]}
+      - {name: credit, data_type: varchar, data_tests: [not_null]}
+
+  - name: sensor
+    description: One device at a station, as SensorThings' Sensor.
+    config: {contract: {enforced: true}}
+    columns:
+      - {name: sensor_key, data_type: varchar, description: "source/sensor_id",
+         data_tests: [unique, not_null]}
+      - {name: source, data_type: varchar, data_tests: [not_null]}
+      - {name: sensor_id, data_type: varchar, data_tests: [not_null]}
+      - name: station_key
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships: {arguments: {to: ref('station'), field: station_key}}
+      - name: sensor_type
+        data_type: varchar
+        data_tests:
+          - not_null
+          - accepted_values: {arguments: {values: [reference monitor]}}
+
+  - name: datastream
+    description: >
+      One sensor measuring one parameter at one station in one unit, as SensorThings' Datastream.
+    config: {contract: {enforced: true}}
+    columns:
+      - {name: datastream_key, data_type: varchar, description: "source/sensor_id/parameter",
+         data_tests: [unique, not_null]}
+      - name: station_key
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships: {arguments: {to: ref('station'), field: station_key}}
+      - name: sensor_key
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships: {arguments: {to: ref('sensor'), field: sensor_key}}
+      - name: parameter
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships: {arguments: {to: ref('parameter'), field: parameter}}
+      - {name: unit, data_type: varchar, data_tests: [not_null]}
+      - {name: start_date, data_type: date, data_tests: [not_null]}
