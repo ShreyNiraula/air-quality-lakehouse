@@ -18,7 +18,7 @@ dbt-check:  ## start the object store and the Iceberg catalog, then run the dbt 
 	docker compose up -d --wait
 	uv run python -m airquality.checks.dbt_build
 
-seeds:  ## load the vocabulary and the registry, build the station, sensor and datastream tables, and test them all
+seeds:  ## load the seeds, build every table (raw reads the store in AIRQUALITY_STORE, by default data/), and test them all
 	uv run dbt build --project-dir dbt_project --profiles-dir dbt_project
 
 .PHONY: setup lint test check lakehouse dbt-check seeds

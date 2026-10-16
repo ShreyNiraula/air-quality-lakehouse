@@ -8,3 +8,5 @@ __pycache__/
 dbt_project/target/
 dbt_project/logs/
 *.duckdb
+# The store that ingestion writes to, by default
+/data/
