@@ -14,6 +14,9 @@ For the owner, who has not read the code. No project words without saying what t
 <!--
 A ```mermaid diagram with plain labels. Then real examples: a table of real rows or real output,
 and example code or a command. Every example comes from a real file, run or test, never made up.
+If the PR adds or changes a table, add "Keys and links": where its data comes from, how a real row
+is split into its columns, primary and foreign keys with real values, how they are enforced, any
+index, sort or partition key and why, and one example query with its real output.
 -->
 
 ## Technical summary

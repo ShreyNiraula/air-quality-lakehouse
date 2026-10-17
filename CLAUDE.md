@@ -36,6 +36,7 @@ The owner reads every PR, comment and chat answer, and has not read the code. Wr
 - **Big picture first.** Start with what it is, why it is needed, and what comes next, in plain words. Details come after, or when asked.
 - **No unexplained project words.** Say what "pointer", "landing", "quarantine", "incremental" and the like mean the first time they appear, or use plain words instead.
 - **Show, don't only tell.** For anything that works step by step, give a small worked example ("Monday ... Tuesday ..."). Add a Mermaid diagram with plain labels, a table of real example rows, and example code or a command wherever they help.
+- **New or changed tables get a table map.** For each table a PR adds or changes, show: where its data comes from (a diagram), how a real source row is split into its columns, its primary key and foreign keys with real example values, how those keys are enforced (dbt tests, since DuckDB declares none), any index, sort or partition key and why, and one example query with its real output.
 - **Examples are real.** Every example value comes from a real file, run or test. Never invent one.
 - **PR descriptions follow `.github/pull_request_template.md`:** `Closes #<issue>` on the first line, then "In plain words", "How it works", "Technical summary", and the file table.
 - **An edited description gets a comment.** GitHub sends no notice when a description changes, so post a one-line comment saying what was updated.
