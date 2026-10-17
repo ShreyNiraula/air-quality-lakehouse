@@ -29,6 +29,17 @@ A task is **ready** when everything on its "Needs" line is ticked in `ROADMAP.md
 
 Each roadmap item also has a GitHub issue, which is its card on the owner's project board. The issue's stage is a label: `ready`, `in progress` or `your review`. No label means waiting, and a closed issue is done. `.github/scripts/sync_board.py` makes the issues follow the roadmap on `main`; never edit them by hand to say something the roadmap does not. The board itself is the owner's: GitHub adds new issues to it and moves closed ones to Done. Do not ask for permission to manage projects.
 
+## Writing for the owner
+
+The owner reads every PR, comment and chat answer, and has not read the code. Write so they understand it on the first read:
+
+- **Big picture first.** Start with what it is, why it is needed, and what comes next, in plain words. Details come after, or when asked.
+- **No unexplained project words.** Say what "pointer", "landing", "quarantine", "incremental" and the like mean the first time they appear, or use plain words instead.
+- **Show, don't only tell.** For anything that works step by step, give a small worked example ("Monday ... Tuesday ..."). Add a Mermaid diagram with plain labels, a table of real example rows, and example code or a command wherever they help.
+- **Examples are real.** Every example value comes from a real file, run or test. Never invent one.
+- **PR descriptions follow `.github/pull_request_template.md`:** `Closes #<issue>` on the first line, then "In plain words", "How it works", "Technical summary", and the file table.
+- **An edited description gets a comment.** GitHub sends no notice when a description changes, so post a one-line comment saying what was updated.
+
 ## Rules
 
 - **Never merge, and never push to `main`.** Merging is the owner's decision. This holds even when asked in passing; say that merging is theirs to do on GitHub.
