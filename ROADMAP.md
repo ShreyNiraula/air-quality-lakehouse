@@ -125,6 +125,8 @@ flowchart LR
   t1_17["1.17 Promotion"]
   t1_18["1.18 Gate demo"]
   t1_19["1.19 Question 1 and README"]
+  t1_20["1.20 Sources folder"]
+  t1_21["1.21 Docstring examples"]
   oC --> t1_3
   t1_1 --> t1_4
   t1_2 --> t1_4
@@ -152,9 +154,11 @@ flowchart LR
   t1_17 --> t1_18
   t1_10 --> t1_19
   t1_18 --> t1_19
+  t1_7 --> t1_20
+  t1_1 --> t1_21
 ```
 
-**Order of work:** 1.1, 1.2 and 1.3 side by side. Then 1.4, 1.7, 1.8 and 1.15a. Then 1.5, then 1.6. Then 1.9 and 1.11. Then 1.10 and 1.12. Then 1.13 and 1.15b. Then 1.14, 1.16, 1.17, 1.18 and 1.19 one after another.
+**Order of work:** 1.1, 1.2 and 1.3 side by side. Then 1.4, 1.7, 1.8 and 1.15a. Then 1.5, then 1.6. Then 1.9 and 1.11. Then 1.10 and 1.12. Then 1.13 and 1.15b. Then 1.14, 1.16, 1.17, 1.18 and 1.19 one after another. Tasks 1.20 and 1.21 need only the tasks they name, so they can be done at any point.
 
 - [x] **Owner C: Decide where the pipeline records which file version is current.**
   Decided on 7 October 2026: SQLite. DynamoDB Local was the other option.
@@ -218,6 +222,12 @@ flowchart LR
 
 - [ ] **1.19 Question 1 and README.** One command runs the whole pipeline on the test data. A script prints the answer to question 1. The README has the problem, a diagram, the command, the limits and one honest failure case.
   Needs: 1.10, 1.18. Done when: a fresh clone follows the README and gets the same result, and CI runs the build and the gate tests.
+
+- [ ] **1.20 Sources folder.** Move the adapters into `src/airquality/sources/`, with a shared `_common.py` for the polite fetch and listing helpers that `openaq.py` now takes from `checks/`. No behaviour change.
+  Needs: 1.7. Done when: all tests pass unchanged apart from import paths, and no module outside `checks/` imports from `checks/`.
+
+- [ ] **1.21 Docstring examples.** A short worked example (input and output) in the docstrings of the functions that are hard to read, starting with `parse` and `validate` in `contracts.py`. Docstrings only.
+  Needs: 1.1. Done when: the diff changes no code, and the examples are run as doctests or by a test.
 
 ---
 
