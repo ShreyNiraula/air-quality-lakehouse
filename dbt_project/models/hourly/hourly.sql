@@ -38,6 +38,9 @@ with readings as (
         on raw.source = registry.source
         and raw.station_id = registry.station_id
         and raw.sensor_id = registry.sensor_id
+        -- and the line must be of that parameter. OpenAQ names its parameters as the vocabulary
+        -- does (contracts/openaq.yml: pm25 is called pm25); tests/test_hourly.py checks that.
+        and raw.parameter = registry.parameter
     {% if is_incremental() %}
     where not exists (
         select 1 from {{ this }} as held

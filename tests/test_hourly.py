@@ -11,7 +11,7 @@ import duckdb
 import pytest
 from test_registry import PROJECT, build
 
-from airquality import openaq
+from airquality import contracts, openaq
 from airquality.ingest import Event, ingest
 from airquality.storage import DirectoryStorage, SqlitePointer
 
@@ -153,3 +153,23 @@ def test_a_correction_that_drops_the_pinned_sensor_removes_its_hours(
     after = built(project, tmp_path, monkeypatch)
     assert len(after) == 48
     assert all(after[h] == before[h] for h in after)
+
+
+def test_a_line_of_the_pinned_sensor_under_another_parameter_is_left_out(
+    project, store, tmp_path, monkeypatch
+):
+    rows = lines(DAYS[0])
+    one = pm25(DAYS[0], "01:00")
+    rows[rows.index(one)] = one.replace('"pm25"', '"pm10"')  # the PM2.5 sensor, labelled PM10
+    deliver(*store, DAYS[0], packed(rows), "0A")
+    found = built(project, tmp_path, monkeypatch)
+    assert utc(0, 23) not in found and len(found) == 23
+
+
+def test_openaq_calls_each_parameter_as_the_vocabulary_does():
+    # hourly.sql matches a line's parameter to the registry's directly, which holds only while
+    # the contract maps each vocabulary parameter to a source name equal to it.
+    openaq_contract = contracts.load("openaq")
+    assert {name: entry.name for name, entry in openaq_contract.parameters.items()} == {
+        "pm25": "pm25"
+    }
