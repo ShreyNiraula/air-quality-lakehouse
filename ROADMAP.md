@@ -127,6 +127,7 @@ flowchart LR
   t1_19["1.19 Question 1 and README"]
   t1_20["1.20 Sources folder"]
   t1_21["1.21 Docstring examples"]
+  t1_22["1.22 Raw model per source"]
   oC --> t1_3
   t1_1 --> t1_4
   t1_2 --> t1_4
@@ -156,9 +157,10 @@ flowchart LR
   t1_18 --> t1_19
   t1_7 --> t1_20
   t1_1 --> t1_21
+  t1_11 --> t1_22
 ```
 
-**Order of work:** 1.1, 1.2 and 1.3 side by side. Then 1.4, 1.7, 1.8 and 1.15a. Then 1.5, then 1.6. Then 1.9 and 1.11. Then 1.10 and 1.12. Then 1.13 and 1.15b. Then 1.14, 1.16, 1.17, 1.18 and 1.19 one after another. Tasks 1.20 and 1.21 need only the tasks they name, so they can be done at any point.
+**Order of work:** 1.1, 1.2 and 1.3 side by side. Then 1.4, 1.7, 1.8 and 1.15a. Then 1.5, then 1.6. Then 1.9 and 1.11. Then 1.10 and 1.12. Then 1.13 and 1.15b. Then 1.14, 1.16, 1.17, 1.18 and 1.19 one after another. Tasks 1.20, 1.21 and 1.22 need only the tasks they name, so they can be done at any point.
 
 - [x] **Owner C: Decide where the pipeline records which file version is current.**
   Decided on 7 October 2026: SQLite. DynamoDB Local was the other option.
@@ -228,6 +230,9 @@ flowchart LR
 
 - [ ] **1.21 Docstring examples.** A short worked example (input and output) in the docstrings of the functions that are hard to read, starting with `parse` and `validate` in `contracts.py`. Docstrings only.
   Needs: 1.1. Done when: the diff changes no code, and the examples are run as doctests or by a test.
+
+- [ ] **1.22 Raw model per source.** Split `raw.sql` so that each source has its own small model, holding the file path, the columns and the filter that belong to that source, and `raw` is the union of them. Today `raw.sql` names `openaq` and OpenAQ's column names itself. Adding a source then adds one file and edits no existing model. The shape of `raw` does not change.
+  Needs: 1.11. Done when: on the test data `raw` holds the same rows as before the split, and a test shows a second stand-in source adds its rows without any existing model file changing.
 
 ---
 
