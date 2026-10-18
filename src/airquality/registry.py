@@ -14,7 +14,7 @@ from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from airquality import manifests
+from airquality import contracts, manifests
 
 SEEDS = Path(__file__).parents[2] / "dbt_project" / "seeds"
 # Milestone 1 is one source and one city. Task 2.4 adds Wien and the openSenseMap boxes.
@@ -32,6 +32,7 @@ COLUMNS = (
     "credit",
     "sensor_id",
     "parameter",
+    "source_name",
     "start_date",
 )
 
@@ -45,6 +46,11 @@ def vocabulary() -> list[str]:
 def rows(manifest: dict, cities: tuple[str, ...], parameters: list[str]) -> list[dict]:
     """The registry rows of one source: its stations in `cities`, for `parameters` only."""
     licence, period = manifest["licence"], date.fromisoformat(manifest["files"]["from"])
+    # What the source calls each parameter, from its contract. A parameter the contract does not
+    # map cannot be read from the source's files, so it raises a KeyError here.
+    called = {
+        name: entry.name for name, entry in contracts.load(manifest["source"]).parameters.items()
+    }
     found = []
     for station in manifest["stations"]:
         if station["city"] not in cities:
@@ -65,6 +71,7 @@ def rows(manifest: dict, cities: tuple[str, ...], parameters: list[str]) -> list
                     "credit": licence["credit"],
                     "sensor_id": sensor["id"],
                     "parameter": sensor["parameter"],
+                    "source_name": called[sensor["parameter"]],
                     "start_date": str(max(period, began)),
                 })  # fmt: skip
     return sorted(found, key=lambda row: (row["city"], row["station_id"], row["parameter"]))

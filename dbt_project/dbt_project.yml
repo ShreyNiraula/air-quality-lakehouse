@@ -1,6 +1,7 @@
 # The dbt project of the platform. Task 1.2 starts it with its two seeds, the vocabulary and the
 # registry; task 1.15a adds the station, sensor and datastream tables built from them, and
-# task 1.11 the raw table, read from the store that ingestion writes to (AIRQUALITY_STORE).
+# task 1.11 the raw table, read from the store that ingestion writes to (AIRQUALITY_STORE), and
+# task 1.12 the hourly table built from it.
 # `make seeds` loads the seeds, builds the tables and runs every test.
 name: airquality
 version: "1.0"

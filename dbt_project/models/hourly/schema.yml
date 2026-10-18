@@ -1,0 +1,39 @@
+models:
+  - name: hourly
+    description: >
+      One row per datastream and hour: the hour's value and whether it is valid, with the reason
+      when it is not. Incremental: only the hours of files whose version changed are replaced.
+    config: {contract: {enforced: true}}
+    data_tests:
+      - unique:
+          name: hourly_one_row_per_datastream_and_hour
+          arguments: {column_name: "datastream_key || '/' || cast(hour_start as varchar)"}
+    columns:
+      - name: datastream_key
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships: {arguments: {to: ref('datastream'), field: datastream_key}}
+      - {name: source, data_type: varchar, data_tests: [not_null]}
+      - {name: station_id, data_type: varchar, data_tests: [not_null]}
+      - {name: sensor_id, data_type: varchar, data_tests: [not_null]}
+      - {name: parameter, data_type: varchar, data_tests: [not_null]}
+      - name: hour_start
+        data_type: timestamptz
+        description: The start of the hour. OpenAQ's stamp names its end, so one hour is taken off.
+        data_tests: [not_null]
+      - {name: value, data_type: double, description: "The hour's one value; empty when the rows disagree"}
+      - {name: is_valid, data_type: boolean, data_tests: [not_null]}
+      - name: invalid_reason
+        data_type: varchar
+        description: Empty for a valid hour.
+        data_tests:
+          - accepted_values:
+              arguments: {values: [conflicting values, not a number, out of range]}
+      - {name: rows_found, data_type: integer, description: "Rows the file had for this hour; 2 or more means duplicates"}
+      - {name: file, data_type: varchar, data_tests: [not_null]}
+      - {name: version, data_type: varchar, data_tests: [not_null]}
+      - name: metadata
+        data_type: varchar
+        description: A fingerprint of the station list and the vocabulary this hour was judged with.
+        data_tests: [not_null]
