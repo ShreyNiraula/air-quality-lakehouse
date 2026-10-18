@@ -34,7 +34,7 @@ Work out which tasks are ready, as `CLAUDE.md` defines it.
 ## 4. Open the pull request as a draft
 
 - Commit, then `git push -u origin <branch>`.
-- `gh pr create --draft`, titled `[<task id>] <task name>`, attached to the task's GitHub milestone, with no label. Fill in every section of `.github/pull_request_template.md`. End "What this does" with `Closes #<issue number>`, using the number from `python3 .github/scripts/sync_board.py --issue <task id>`, so that merging closes the issue. Write "Read the files in this order" for someone who has not seen the code.
+- `gh pr create --draft`, titled `[<task id>] <task name>`, attached to the task's GitHub milestone, with no label. Fill in every section of `.github/pull_request_template.md`, following "Writing for the owner" in `CLAUDE.md`. The first line is `Closes #<issue number>`, using the number from `python3 .github/scripts/sync_board.py --issue <task id>`, so that merging closes the issue. "In plain words" and "How it works" come before anything technical: a diagram, real example rows or output, and example code. Write "Read the files in this order" as the template's table, for someone who has not seen the code.
 - Wait for CI with `gh pr checks <pr> --watch` and fix failures until it is green.
 
 ## 5. Review rounds with Codex: aim for two, three at most
@@ -61,6 +61,7 @@ Do these in order. The label goes on last, because it is what emails the owner.
 
 - `gh pr ready <pr>`
 - `python3 .github/scripts/sync_board.py --set <task id> "Your review"`
+- If the PR description changed since it was opened, check that "In plain words", "How it works", the test count and the size still match the final code.
 - Post one comment covering, in plain language:
   - what to look at first, and the command to run;
   - what Codex raised in each round, and what was fixed;
