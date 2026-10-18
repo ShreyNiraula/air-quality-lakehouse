@@ -1,0 +1,34 @@
+models:
+  - name: current_file
+    description: >
+      The file versions the pointer names, with their station, day and validated copy. Read from
+      the store that ingestion writes to: AIRQUALITY_STORE, by default the folder `data`.
+    config:
+      store: "{{ env_var('AIRQUALITY_STORE', 'data') }}"
+    columns:
+      - {name: file, data_tests: [unique, not_null]}
+      - {name: version, data_tests: [not_null]}
+      - {name: station_id, data_tests: [not_null]}
+      - {name: day, data_tests: [not_null]}
+      - {name: path, data_tests: [unique, not_null]}
+
+  - name: raw
+    description: >
+      One row per row of each current file version, as the file writes it. Incremental: a build
+      replaces only the files whose version changed.
+    config: {contract: {enforced: true}}
+    columns:
+      - {name: source, data_type: varchar, data_tests: [not_null]}
+      - {name: station_id, data_type: varchar, data_tests: [not_null]}
+      - {name: day, data_type: date, data_tests: [not_null]}
+      - {name: sensor_id, data_type: varchar, data_tests: [not_null]}
+      - {name: parameter, data_type: varchar, data_tests: [not_null]}
+      - {name: unit, data_type: varchar}
+      - {name: stamped_at, data_type: timestamptz, data_tests: [not_null]}
+      - {name: value, data_type: varchar, description: "As the file writes it, not yet judged"}
+      - name: file
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships: {arguments: {to: ref('current_file'), field: file}}
+      - {name: version, data_type: varchar, data_tests: [not_null]}
