@@ -5,7 +5,8 @@
 --
 -- Incremental, like `raw`: a build first removes the hours of file versions that are no longer
 -- current (pre_hook), then adds the hours of versions it does not hold yet. So a corrected file
--- replaces exactly its own station and day, even when the correction drops rows.
+-- replaces exactly its own station and day, even when the correction drops rows. When the station
+-- list or the vocabulary changes, every hour is removed and redone (see metadata_fingerprint).
 -- depends_on: {{ ref('current_file') }}
 {{ config(
     materialized='incremental',
@@ -13,10 +14,11 @@
     on_schema_change='fail',
     pre_hook="{% if is_incremental() %}
         delete from {{ this }} as held
-        where not exists (
-            select 1 from {{ ref('current_file') }} as current
-            where current.file = held.file and current.version = held.version
-        )
+        where held.metadata <> {{ metadata_fingerprint() }}
+            or not exists (
+                select 1 from {{ ref('current_file') }} as current
+                where current.file = held.file and current.version = held.version
+            )
     {% endif %}",
 ) }}
 
@@ -38,9 +40,8 @@ with readings as (
         on raw.source = registry.source
         and raw.station_id = registry.station_id
         and raw.sensor_id = registry.sensor_id
-        -- and the line must be of that parameter. OpenAQ names its parameters as the vocabulary
-        -- does (contracts/openaq.yml: pm25 is called pm25); tests/test_hourly.py checks that.
-        and raw.parameter = registry.parameter
+        -- and the line must be of that parameter, by the name the source gives it
+        and raw.parameter = registry.source_name
     {% if is_incremental() %}
     where not exists (
         select 1 from {{ this }} as held
@@ -88,6 +89,7 @@ select
     end as invalid_reason,
     cast(hours.rows_found as integer) as rows_found,
     hours.file,
-    hours.version
+    hours.version,
+    {{ metadata_fingerprint() }} as metadata
 from hours
 inner join {{ ref('parameter') }} as parameter on hours.parameter = parameter.parameter

@@ -33,3 +33,7 @@ models:
       - {name: rows_found, data_type: integer, description: "Rows the file had for this hour; 2 or more means duplicates"}
       - {name: file, data_type: varchar, data_tests: [not_null]}
       - {name: version, data_type: varchar, data_tests: [not_null]}
+      - name: metadata
+        data_type: varchar
+        description: A fingerprint of the station list and the vocabulary this hour was judged with.
+        data_tests: [not_null]

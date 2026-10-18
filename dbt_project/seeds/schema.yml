@@ -73,6 +73,9 @@ seeds:
         data_tests:
           - not_null
           - relationships: {arguments: {to: ref('parameter'), field: parameter}}
+      - name: source_name
+        description: What the source calls this parameter in its files, from its contract.
+        data_tests: [not_null]
       - name: start_date
         description: The first day of the station's period for this parameter.
         data_tests: [not_null]

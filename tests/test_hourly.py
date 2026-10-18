@@ -11,7 +11,7 @@ import duckdb
 import pytest
 from test_registry import PROJECT, build
 
-from airquality import contracts, openaq
+from airquality import openaq
 from airquality.ingest import Event, ingest
 from airquality.storage import DirectoryStorage, SqlitePointer
 
@@ -166,10 +166,39 @@ def test_a_line_of_the_pinned_sensor_under_another_parameter_is_left_out(
     assert utc(0, 23) not in found and len(found) == 23
 
 
-def test_openaq_calls_each_parameter_as_the_vocabulary_does():
-    # hourly.sql matches a line's parameter to the registry's directly, which holds only while
-    # the contract maps each vocabulary parameter to a source name equal to it.
-    openaq_contract = contracts.load("openaq")
-    assert {name: entry.name for name, entry in openaq_contract.parameters.items()} == {
-        "pm25": "pm25"
-    }
+def in_seed(project, name: str, old: str, new: str) -> None:
+    seed = project / "seeds" / name
+    text = seed.read_text(encoding="utf-8")
+    assert old in text
+    seed.write_text(text.replace(old, new), encoding="utf-8")
+
+
+def test_a_source_s_own_name_for_a_parameter_is_read_through_the_station_list(
+    project, store, tmp_path, monkeypatch
+):
+    # As if the contract said OpenAQ calls PM2.5 "pm2.5": the registry's source_name carries it.
+    in_seed(project, "registry.csv", ",1300119,pm25,pm25,", ",1300119,pm25,pm2.5,")
+    rows = [line.replace('"pm25"', '"pm2.5"') for line in lines(DAYS[0])]
+    deliver(*store, DAYS[0], packed(rows), "0A")
+    found = built(project, tmp_path, monkeypatch)
+    assert len(found) == 24 and found[utc(0, 23)][:2] == (26.81, True)
+
+
+def test_a_changed_valid_range_rejudges_hours_already_built(project, store, tmp_path, monkeypatch):
+    deliver(*store, DAYS[0], packed(lines(DAYS[0])), "0A")
+    assert built(project, tmp_path, monkeypatch)[utc(1, 0)][:3] == (161.66, True, None)
+    in_seed(project, "parameter.csv", ",0,1000,", ",0,100,")
+    after = built(project, tmp_path, monkeypatch)
+    assert after[utc(1, 0)][:3] == (161.66, False, "out of range")
+    assert after[utc(0, 23)][:3] == (26.81, True, None)
+
+
+def test_the_test_data_s_month_of_berlin_mitte_gives_707_valid_hours(
+    project, store, tmp_path, monkeypatch
+):
+    for day in openaq.days(date(2025, 1, 1)):
+        deliver(*store, day, (openaq.FIXTURES / openaq.key(STATION, day)).read_bytes(), "0A")
+    found = built(project, tmp_path, monkeypatch)
+    con = duckdb.connect(str(tmp_path / "candidate.duckdb"))
+    assert con.execute("SELECT count(*) FROM raw").fetchone() == (2120,)
+    assert len(found) == 707 and all(row[1] for row in found.values())
